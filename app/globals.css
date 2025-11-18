@@ -1,0 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* brand tokens & rtl */
+:root{ --olive:#348B79; --ink:#0E1615; --beige:#F8F6F2; }
+html[dir='rtl'] body{ direction: rtl; }

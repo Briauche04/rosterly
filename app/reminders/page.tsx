@@ -1,0 +1,1 @@
+export default function Reminders(){return (<main className="max-w-3xl mx-auto p-4"><h1 className="text-xl font-bold mb-4">תזכורות</h1><p>חגים, ימי הולדת, ואירועים — Placeholder.</p></main>);}

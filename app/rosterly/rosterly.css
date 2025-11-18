@@ -1,0 +1,138 @@
+html, body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: system-ui, sans-serif;
+  background: #f5f3ef;
+  color: #333;
+}
+
+/* Top navigation (from your HTML) */
+.top-nav {
+  background-color: #f5f3ef;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 2rem;
+  direction: ltr; /* layout direction */
+}
+
+.nav-logo {
+  font-size: 1.2rem;
+  color: #4f553d;
+  font-weight: bold;
+  direction: rtl; /* text direction */
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  direction: rtl;
+}
+
+.nav-links a {
+  color: #4f553d;
+  text-decoration: none;
+}
+
+.nav-links .login-btn {
+  background-color: #757a5e;
+  color: white;
+  border-radius: 2rem;
+  padding: 0.4rem 1rem;
+  border: none;
+}
+
+.nav-links .login-btn:hover {
+  background-color: #64694f;
+}
+
+/* Main container */
+.landing-main {
+  max-width: 640px;
+  margin: 0 auto;
+  text-align: right;
+  padding-top: 4rem;
+  padding-bottom: 4rem;
+}
+
+.logo {
+  max-width: 160px;
+  margin: 0 auto 1.5rem;
+  display: block;
+  border-radius: 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+h2, h3 {
+  color: #4f553d;
+  text-align: right;
+}
+
+h2 {
+  font-size: 1.8rem;
+  margin-bottom: 0.25rem;
+}
+
+h3 {
+  margin-bottom: 2rem;
+  font-weight: normal;
+}
+
+.action-card {
+  background-color: #eae9e0;
+  border: 1px solid #dcdcd3;
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+  text-align: right;
+  transition: background-color 0.2s ease;
+  cursor: pointer;
+}
+
+.action-card:hover {
+  background-color: #dedcd3;
+}
+
+.action-card header {
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+  background-color: #757a5e;
+  color: white;
+  border-radius: 2rem;
+  padding: 0.4rem 1rem;
+  display: inline-block;
+}
+
+.action-card a {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.action-card p {
+  color: #000;
+}
+
+/* Footer */
+.landing-footer {
+  text-align: center;
+  font-size: 0.8rem;
+  color: #aaa;
+  padding: 2rem 0;
+  border-top: 1px solid #eee;
+}
+/* Manager card slightly different shade */
+/* Manager card – stronger contrast */
+.action-card.manager-card {
+  background-color: #d6ddc7;  /* or #cfd9b8 / #c3d1a3 if you prefer */
+  border-color: #b3ba9f;
+}

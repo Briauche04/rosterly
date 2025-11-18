@@ -1,0 +1,141 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
+
+export default function AuthPage() {
+  const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [code, setCode] = useState('');
+  const [phase, setPhase] = useState<'request' | 'verify'>('request');
+  const [msg, setMsg] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  // If already logged in, go to dashboard
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.auth.getUser();
+      if (data.user) router.replace('/dashboard');
+    })();
+  }, [router]);
+
+  // Send verification code
+  async function sendCode(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    setMsg('שולח קוד אימות למייל…');
+
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: 'http://localhost:3000',
+        shouldCreateUser: true,
+      },
+    });
+
+    setLoading(false);
+    if (error) {
+      setMsg('❌ שגיאה: ' + error.message);
+      return;
+    }
+    setMsg('✅ קוד נשלח למייל. הזן אותו כאן למטה.');
+    setPhase('verify');
+  }
+
+  // Verify 6-digit code
+  async function verifyCode(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    setMsg('מאמת קוד…');
+
+    const { data, error } = await supabase.auth.verifyOtp({
+      email,
+      token: code.trim(),
+      type: 'email',
+    });
+
+    setLoading(false);
+    if (error) {
+      setMsg('❌ קוד לא תקין או שפג תוקפו. נסה שוב.');
+      return;
+    }
+
+    if (data?.session) {
+      setMsg('✅ התחברת בהצלחה. מעביר ללוח הבקרה…');
+      setTimeout(() => router.push('/dashboard'), 1500);
+    } else {
+      setMsg('❗ קרתה בעיה בשמירת ההתחברות. נסה שוב.');
+    }
+  }
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+      <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow">
+        <h1 className="mb-4 text-center text-2xl font-bold text-gray-800">
+          התחברות למערכת המשמרות
+        </h1>
+
+        {/* === Step 1: Request Code === */}
+        {phase === 'request' && (
+          <form onSubmit={sendCode} className="flex flex-col gap-3">
+            <input
+              type="email"
+              placeholder="האימייל שלך"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="rounded border border-gray-300 px-3 py-2 text-gray-800 focus:border-blue-500 focus:outline-none"
+            />
+            <button
+              type="submit"
+              disabled={loading}
+              className="rounded bg-blue-600 py-2 font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+            >
+              {loading ? 'שולח…' : 'שלח קוד התחברות'}
+            </button>
+          </form>
+        )}
+
+        {/* === Step 2: Verify Code === */}
+        {phase === 'verify' && (
+          <form onSubmit={verifyCode} className="flex flex-col gap-3">
+            <input
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={6}
+              placeholder={`הקלד קוד בן 6 ספרות`}
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              required
+              className="rounded border border-gray-300 px-3 py-2 text-center tracking-widest text-lg text-gray-800 focus:border-blue-500 focus:outline-none"
+            />
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="rounded bg-green-600 py-2 font-semibold text-white hover:bg-green-700 disabled:opacity-60"
+            >
+              {loading ? 'מאמת…' : 'אשר קוד והתחבר'}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setPhase('request');
+                setMsg('');
+                setCode('');
+              }}
+              className="rounded bg-gray-200 py-2 font-semibold text-gray-800 hover:bg-gray-300"
+            >
+              חזרה לשליחת קוד
+            </button>
+          </form>
+        )}
+
+        {msg && <p className="mt-4 text-center text-sm text-gray-700">{msg}</p>}
+      </div>
+    </div>
+  );
+}

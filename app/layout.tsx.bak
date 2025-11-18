@@ -1,0 +1,17 @@
+import './globals.css'
+import { Suspense } from 'react'
+
+export const metadata = {
+  title: 'Rosterly',
+  description: 'Shift planning made simple',
+}
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="he" dir="rtl">
+      <body className="min-h-screen bg-gradient-to-b from-[#F2F4F6] to-[#F8F6F2] text-[#1F1F1F]">
+        <Suspense fallback={null}>{children}</Suspense>
+      </body>
+    </html>
+  )
+}

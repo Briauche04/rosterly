@@ -1,0 +1,53 @@
+import "./rosterly.css";
+import type { ReactNode } from "react";
+import { STR, type Lang } from "./i18n";
+
+export const metadata = { title: "Rosterly" };
+
+export default function RosterlyLayout({ children }: { children: ReactNode }) {
+  return <>{children}</>;
+}
+
+export function Header({ lang }: { lang: Lang }) {
+  const t = STR[lang];
+  return (
+    <header className="appbar">
+      <div className="container bar">
+        {/* RIGHT: nav (visual right for LTR; for RTL bar is reversed via CSS) */}
+        <nav className="nav" role="navigation" aria-label="Main">
+          <a href={`/rosterly/tutorials?lang=${lang}`}>{t.tutorials}</a>
+          <a href={`/rosterly/forum?lang=${lang}`}>{t.forum}</a>
+          <a href={`/rosterly/team?lang=${lang}`}>{t.team}</a>
+          <a className="btn" href={`/rosterly/login?lang=${lang}`}>{t.login}</a>
+        </nav>
+
+        {/* CENTER: brand text only */}
+        <div className="brand" aria-hidden>
+          <span className="brand-name">Rosterly</span>
+        </div>
+
+        {/* LEFT: language toggle */}
+        <div className="lang" role="navigation" aria-label="Language">
+          <a href="/rosterly?lang=he" aria-label="עברית">HE</a>
+          <a href="/rosterly?lang=en" aria-label="English">EN</a>
+          <a href="/rosterly?lang=ru" aria-label="Русский">RU</a>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+export function Footer() {
+  const y = new Date().getFullYear();
+  return (
+    <footer className="footer">
+      <div className="container">
+        <span>© {y} Rosterly</span>
+        <div className="muted">
+          <a href="/privacy">Privacy</a>
+          <a href="/terms">Terms</a>
+        </div>
+      </div>
+    </footer>
+  );
+}

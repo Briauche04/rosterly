@@ -1,0 +1,57 @@
+export type Lang = "he" | "en" | "ru";
+
+export const STR: Record<Lang, any> = {
+  he: {
+    dir: "rtl",
+    login: "להתחבר",
+    team: "צוות",
+    forum: "פורום",
+    tutorials: "מדריכים",
+    hero_title: "ניהול משמרות לצוות החנות",
+    hero_sub: "הגשות זמינות, שיבוצים ופורום הודעות במקום אחד.",
+    card_submit_title: "הגשת משמרות",
+    card_submit_body: "תקופת הגשה: מיום א׳ עד יום ג׳ בשעה 12:00.",
+    card_schedule_title: "סידור עבודה",
+    card_schedule_body: "צפייה ושיבוץ של משמרות לפי שבוע.",
+    card_forum_title: "פורום",
+    card_forum_body: "ביטולים, החלפה, קבצים והודעות לצוות והנהלה."
+  },
+
+  en: {
+    dir: "ltr",
+    login: "Log in",
+    team: "Team",
+    forum: "Forum",
+    tutorials: "Tutorials",
+    hero_title: "Shift management for your store team",
+    hero_sub: "Availability submissions, rosters, and a message forum in one place.",
+    card_submit_title: "Submit shifts",
+    card_submit_body: "Submission window: Sunday to Tuesday at 12:00.",
+    card_schedule_title: "Weekly schedule",
+    card_schedule_body: "View and manage shifts by week.",
+    card_forum_title: "Forum",
+    card_forum_body: "Cancellations, swaps, files and messages for staff and management."
+  },
+
+  ru: {
+    dir: "ltr",
+    login: "Войти",
+    team: "Команда",
+    forum: "Форум",
+    tutorials: "Инструкции",
+    hero_title: "Управление сменами для команды магазина",
+    hero_sub: "Подача доступности, графики и форум сообщений в одном месте.",
+    card_submit_title: "Подать смены",
+    card_submit_body: "Период подачи: с воскресенья по вторник до 12:00.",
+    card_schedule_title: "График работы",
+    card_schedule_body: "Просмотр и распределение смен по неделям.",
+    card_forum_title: "Форум",
+    card_forum_body: "Отмена, обмен, файлы и сообщения для команды и руководства."
+  }
+};
+
+export function useLang(query: any): Lang {
+  const q = query?.lang ?? "he";
+  const l = String(q).toLowerCase();
+  return l === "en" || l === "ru" ? (l as Lang) : "he";
+}
