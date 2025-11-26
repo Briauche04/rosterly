@@ -1,0 +1,3 @@
+{
+  "buildCommand": "cd shift-pilot && npm ci && npm run build"
+}
