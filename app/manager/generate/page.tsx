@@ -3,9 +3,7 @@ import GenerateClient from './GenerateClient';
 
 export default function Page({
   searchParams,
-}: {
-  searchParams: { [key: string]: string | string[] | undefined };
-}) {
+}: { searchParams: { [k: string]: string | string[] | undefined } }) {
   const week = typeof searchParams.week === 'string' ? searchParams.week : '';
   return <GenerateClient week={week} />;
 }
