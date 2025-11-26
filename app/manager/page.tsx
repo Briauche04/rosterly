@@ -1,40 +1,38 @@
 // app/manager/page.tsx
-'use client';
+import Link from 'next/link';
+import { getAccessLevelServer } from '@/lib/access-server';
 
-import { useSearchParams } from 'next/navigation';
-import { STR, useLang } from '@/app/rosterly/i18n';
+export const dynamic = 'force-dynamic';
 
-// Uses the IDENTICAL landing DOM + classes – no extra CSS here.
-export default function ManagerHome() {
-  const searchParams = useSearchParams();
-  const lang = useLang(searchParams);
-  const t = STR[lang];
+export default async function ManagerHome() {
+  const level = await getAccessLevelServer();
+  const allowed = level === 'ADMIN' || level === 'MANAGER';
+
+  if (!allowed) {
+    return (
+      <main className="landing-main" dir="rtl">
+        <h2>אין לך הרשאות מנהל</h2>
+        <p>פנה/י למנהל מערכת כדי להעניק הרשאות מתאימות.</p>
+      </main>
+    );
+  }
 
   return (
-    <div className={t.dir === 'rtl' ? 'rtl' : ''}>
-      {/* MAIN CONTENT ONLY – header/footer come from RosterlyShell */}
-      <main className="landing-main">
-        <img src="/logo.png" alt="Rosterly" className="logo" />
+    <main className="landing-main" dir="rtl">
+      <img src="/logo.png" alt="Rosterly" className="logo" />
+      <h2>כלי מנהלים</h2>
+      <h3>אישור הגשות, ניהול צוות ועוד — במקום אחד.</h3>
 
-        <section className="hero">
-          <h1 className="title">כלי מנהלים</h1>
-          <p className="subtitle">אישור הגשות, ניהול צוות וסידור שבועי — במקום אחד.</p>
-        </section>
-
-        <a href="/manager/submissions">
-          <div className="action-card">
-            <header>אישור הגשות</header>
-            <p>סקירת הגשות שבועיות, אישור/דחייה וניהול סטטוסים.</p>
-          </div>
-        </a>
-
-        <a href="/manager/staff">
-          <div className="action-card">
-            <header>ניהול צוות</header>
-            <p>יצירה, עדכון והפעלת עובדים, טלפונים ותפקידים.</p>
-          </div>
-        </a>
-      </main>
-    </div>
+      <section className="landing-cards" style={{ maxWidth: 680, margin: '0 auto' }}>
+        <Link href="/manager/submissions" className="landing-card">
+          <div className="landing-card-top"><span className="btn pill">אישור הגשות</span></div>
+          <div className="landing-card-bottom">צפייה ואישור הגשות העובדים, סימון הערות וסטטוסים.</div>
+        </Link>
+        <Link href="/manager/staff" className="landing-card">
+          <div className="landing-card-top"><span className="btn pill">ניהול צוות</span></div>
+          <div className="landing-card-bottom">יצירה, עריכה והקפאה של עובדים, תפקידים והרשאות.</div>
+        </Link>
+      </section>
+    </main>
   );
 }

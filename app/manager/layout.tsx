@@ -1,19 +1,10 @@
 // app/manager/layout.tsx
-'use client';
+import { Suspense } from 'react';
 
-import type { ReactNode } from 'react';
-import RosterlyShell from '@/app/rosterly/RosterlyShell';
-import ManagerGate from './ManagerGate';
-
-// IMPORTANT: pull in the same stylesheet used by the Rosterly landing
-// If your file lives elsewhere, change the path accordingly.
-import '@/app/rosterly/rosterly.css';
-
-export default function ManagerLayout({ children }: { children: ReactNode }) {
-  // Shell (top-nav / spacing / footer) stays 1:1 with Rosterly main
+export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <RosterlyShell>
-      <ManagerGate>{children}</ManagerGate>
-    </RosterlyShell>
+    <Suspense fallback={<main className="landing-main" dir="rtl"><p>טוען…</p></main>}>
+      {children}
+    </Suspense>
   );
 }
