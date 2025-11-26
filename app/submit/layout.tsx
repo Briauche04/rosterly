@@ -1,13 +1,10 @@
-// app/submit/layout.tsx
-// Reuse the Rosterly shell + styles so the /submit page gets the same navbar/footer.
-import "../rosterly/rosterly.css";               // why: keep visual parity with rosterly pages
-import type { ReactNode } from "react";
-import RosterlyShell from "../rosterly/RosterlyShell";
+// app/submit/layout.tsx  (SERVER — provides Suspense boundary for CSR bailout)
+import { Suspense } from 'react';
 
-export const metadata = {
-  title: "Rosterly — Submit Availability",
-};
-
-export default function SubmitLayout({ children }: { children: ReactNode }) {
-  return <RosterlyShell>{children}</RosterlyShell>;
+export default function Layout({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense fallback={<main className="landing-main" dir="rtl"><p>טוען…</p></main>}>
+      {children}
+    </Suspense>
+  );
 }

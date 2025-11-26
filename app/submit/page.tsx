@@ -1,4 +1,4 @@
-// app/submit/page.tsx  (SERVER)
+// app/submit/page.tsx  (SERVER — no client hooks here)
 import SubmitClient from './SubmitClient';
 
 export default function Page({
