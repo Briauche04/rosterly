@@ -1,11 +1,10 @@
-import "./rosterly.css";
-import type { ReactNode } from "react";
-import RosterlyShell from "./RosterlyShell";
+// app/rosterly/layout.tsx
+import { Suspense } from 'react';
 
-export const metadata = {
-  title: "Rosterly",
-};
-
-export default function RosterlyLayout({ children }: { children: ReactNode }) {
-  return <RosterlyShell>{children}</RosterlyShell>;
+export default function Layout({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense fallback={<main className="landing-main" dir="rtl"><p>טוען…</p></main>}>
+      {children}
+    </Suspense>
+  );
 }
