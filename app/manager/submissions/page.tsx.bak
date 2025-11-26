@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 
-const HOME_ROUTE = '/rosterly'; // ⬅️ change if homepage is different
+const HOME_ROUTE = '/rosterly';
 
 type Status = 'pending' | 'approved' | 'rejected';
 
@@ -176,9 +176,9 @@ export default function ManagerSubmissionsPage() {
   });
 
   function handleLoginClick() {
-    if (email) router.push('/dashboard');
-    else router.push('/rosterly/login?lang=he');
+	router.push('/rosterly/login');
   }
+
 
   function goHome() {
     router.push(HOME_ROUTE);
@@ -237,12 +237,11 @@ export default function ManagerSubmissionsPage() {
           .page {
             min-height: 100vh;
             background: #f5f3ef;
-            display: flex;
-            justify-content: center;
           }
           .page-inner {
             width: 100%;
             max-width: 1200px;
+            margin: 0 auto;
             padding: 16px 32px 40px;
             font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
               sans-serif;
@@ -274,12 +273,11 @@ export default function ManagerSubmissionsPage() {
           .page {
             min-height: 100vh;
             background: #f5f3ef;
-            display: flex;
-            justify-content: center;
           }
           .page-inner {
             width: 100%;
             max-width: 1200px;
+            margin: 0 auto;
             padding: 16px 32px 40px;
             font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
               sans-serif;
@@ -291,29 +289,28 @@ export default function ManagerSubmissionsPage() {
 
   return (
     <main dir="rtl" className="page">
-      <div className="page-inner">
-        {/* Top nav */}
-        <nav className="top-nav">
-          <button className="brand-btn" type="button" onClick={goHome}>
-            Rosterly
+      {/* Full-width nav, like main page */}
+      <nav className="top-nav">
+        <button className="brand-btn" type="button" onClick={goHome}>
+          Rosterly
+        </button>
+        <div className="nav-links">
+          <span className="nav-link">צוות</span>
+          <span className="nav-link">פורום</span>
+          <span className="nav-link">מדריכים</span>
+          <span className="nav-sep" />
+          <button
+            className="nav-login"
+            type="button"
+            onClick={handleLoginClick}
+          >
+            {email ? 'מחובר/ת' : 'להתחבר'}
           </button>
-          <div className="nav-links">
-            <span className="nav-link">צוות</span>
-            <span className="nav-link">פורום</span>
-            <span className="nav-link">מדריכים</span>
-            <span className="nav-sep" />
-            <button
-              className="nav-login"
-              type="button"
-              onClick={handleLoginClick}
-            >
-              {email ? 'מחובר/ת' : 'להתחבר'}
-            </button>
-          </div>
-        </nav>
+        </div>
+      </nav>
 
+      <div className="page-inner">
         <div className="content">
-          {/* Header */}
           <section className="hero">
             <div className="logo-card small">
               <span className="logo-text">Rosterly</span>
@@ -324,7 +321,6 @@ export default function ManagerSubmissionsPage() {
             </p>
           </section>
 
-          {/* Filters + print */}
           <section className="card card-toolbar">
             <div className="toolbar-left">
               <div className="pill small">שבוע שמתחיל ב־ {weekStart}</div>
@@ -379,7 +375,6 @@ export default function ManagerSubmissionsPage() {
             </div>
           </section>
 
-          {/* Submissions table */}
           <section className="card card-table">
             {filteredSubmissions.length === 0 ? (
               <p className="empty-text">אין הגשות לשבוע זה.</p>
@@ -501,24 +496,14 @@ export default function ManagerSubmissionsPage() {
         .page {
           min-height: 100vh;
           background: #f5f3ef;
-          display: flex;
-          justify-content: center;
-        }
-
-        .page-inner {
-          width: 100%;
-          max-width: 1440px;
-          padding: 12px 32px 32px;
-          font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
-            sans-serif;
-          color: #333;
         }
 
         .top-nav {
+          background-color: #f5f3ef;
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 4px 0 12px;
+          padding: 1rem 2rem;
           font-size: 13px;
           direction: ltr;
         }
@@ -560,6 +545,16 @@ export default function ManagerSubmissionsPage() {
           color: #f5f3ef;
           font-size: 12px;
           cursor: pointer;
+        }
+
+        .page-inner {
+          width: 100%;
+          max-width: 1440px;
+          margin: 0 auto;
+          padding: 12px 32px 32px;
+          font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+            sans-serif;
+          color: #333;
         }
 
         .content {

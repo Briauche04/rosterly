@@ -1,10 +1,9 @@
+// app/submit/page.tsx
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-
-const HOME_ROUTE = '/rosterly';
 
 type WeekdayKey = 'sun' | 'mon' | 'tue' | 'wed' | 'thu';
 type WeekendKey = 'fri' | 'sat';
@@ -24,10 +23,11 @@ const WEEKDAYS: { key: WeekdayKey; label: string }[] = [
 const CHOICES_WEEKDAY: WeekdayChoice[] = ['פתוח', 'בוקר', 'ערב', 'לא זמין'];
 const CHOICES_WEEKEND: WeekendChoice[] = ['פתוח', 'שישי', 'מוצ״ש', 'לא זמין'];
 
+// Get Sunday of current week as YYYY-MM-DD
 function getCurrentWeekStartSunday(): string {
   const today = new Date();
-  const day = today.getDay();
-  const diff = today.getDate() - day;
+  const day = today.getDay(); // 0 Sun, 1 Mon, ...
+  const diff = today.getDate() - day; // go back to Sunday
   const sunday = new Date(today);
   sunday.setDate(diff);
   sunday.setHours(0, 0, 0, 0);
@@ -53,11 +53,11 @@ export default function SubmitPage() {
     thu: 'פתוח',
   });
 
-  const [weekendChoice, setWeekendChoice] =
-    useState<WeekendChoice>('לא זמין');
+  const [weekendChoice, setWeekendChoice] = useState<WeekendChoice>('לא זמין');
 
   const weekStart = useMemo(() => getCurrentWeekStartSunday(), []);
 
+  // Load user + existing submission
   useEffect(() => {
     const init = async () => {
       try {
@@ -69,6 +69,7 @@ export default function SubmitPage() {
 
         setEmail(data.user.email ?? null);
 
+        // find linked employee
         const { data: emp, error: empErr } = await supabase
           .from('employees')
           .select('id')
@@ -85,6 +86,7 @@ export default function SubmitPage() {
 
         setEmployeeId(emp.id as string);
 
+        // try to load existing submission for this week
         const { data: submission, error: subErr } = await supabase
           .from('submissions')
           .select('id')
@@ -165,6 +167,7 @@ export default function SubmitPage() {
     setStatus('שומר...');
 
     try {
+      // upsert submission row
       const { data: submission, error: subErr } = await supabase
         .from('submissions')
         .upsert(
@@ -182,11 +185,13 @@ export default function SubmitPage() {
 
       const submissionId = submission.id as string;
 
+      // clear previous days
       await supabase
         .from('submission_days')
         .delete()
         .eq('submission_id', submissionId);
 
+      // weekday rows
       const weekdayRows = WEEKDAYS.map((d) => {
         const choice = weekdayChoices[d.key];
         const available = choice !== 'לא זמין';
@@ -200,6 +205,7 @@ export default function SubmitPage() {
         };
       });
 
+      // weekend rows from combined choice (Fri + Sat)
       let friAvailable = false;
       let satAvailable = false;
       switch (weekendChoice) {
@@ -258,30 +264,22 @@ export default function SubmitPage() {
     }
   }
 
-  const handleLoginClick = () => {
-    if (email) router.push('/dashboard');
-    else router.push('/rosterly/login?lang=he');
-  };
-
-  const goHome = () => router.push(HOME_ROUTE);
-
   if (loading) {
     return (
       <main dir="rtl" className="page">
         <div className="page-inner">
-          <div className="center-card">
-            טוען את טופס המשמרות...
-          </div>
+          <div className="center-card">טוען את טופס המשמרות...</div>
         </div>
         <style jsx>{`
           .page {
             min-height: 100vh;
             background: #f5f3ef;
+            display: flex;
+            justify-content: center;
           }
           .page-inner {
             width: 100%;
             max-width: 1200px;
-            margin: 0 auto;
             padding: 16px 32px 40px;
             font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
               sans-serif;
@@ -303,28 +301,10 @@ export default function SubmitPage() {
 
   return (
     <main dir="rtl" className="page">
-      {/* Full-width nav, like main page */}
-      <nav className="top-nav">
-        <button className="brand-btn" type="button" onClick={goHome}>
-          Rosterly
-        </button>
-        <div className="nav-links">
-          <span className="nav-link">צוות</span>
-          <span className="nav-link">פורום</span>
-          <span className="nav-link">מדריכים</span>
-          <span className="nav-sep" />
-          <button
-            className="nav-login"
-            type="button"
-            onClick={handleLoginClick}
-          >
-            {email ? 'מחובר/ת' : 'להתחבר'}
-          </button>
-        </div>
-      </nav>
-
       <div className="page-inner">
+        {/* Center content (navbar comes from RosterlyShell) */}
         <div className="content">
+          {/* Logo + title */}
           <section className="hero">
             <div className="logo-card">
               <img
@@ -339,13 +319,12 @@ export default function SubmitPage() {
             </p>
           </section>
 
+          {/* Form card */}
           <section className="card card-form">
             <div className="card-header">
               <div className="card-title-row">
                 <h2 className="card-title">טופס זמינות לשבוע הקרוב</h2>
-                <span className="pill small">
-                  שבוע שמתחיל ב־ {weekStart}
-                </span>
+                <span className="pill small">שבוע שמתחיל ב־ {weekStart}</span>
               </div>
               <p className="card-description">
                 לכל יום בחר/י אם את/ה פתוח/ה לכל משמרת, מעדיפ/ה בוקר, ערב או לא
@@ -353,6 +332,7 @@ export default function SubmitPage() {
               </p>
             </div>
 
+            {/* Weekday rows */}
             <div className="days-list">
               {WEEKDAYS.map((d) => {
                 const choice = weekdayChoices[d.key];
@@ -392,6 +372,7 @@ export default function SubmitPage() {
                 );
               })}
 
+              {/* Weekend combined row */}
               <div
                 className={
                   'day-row' +
@@ -427,6 +408,7 @@ export default function SubmitPage() {
               </div>
             </div>
 
+            {/* Note */}
             <div className="field">
               <label className="field-label">הערה כללית למנהל</label>
               <p className="field-help">
@@ -440,6 +422,7 @@ export default function SubmitPage() {
               />
             </div>
 
+            {/* Actions */}
             <div className="actions">
               <button
                 type="button"
@@ -457,13 +440,9 @@ export default function SubmitPage() {
           </section>
 
           <footer className="footer">
-            <a href="#" className="footer-link">
-              Privacy
-            </a>
+            <a href="#" className="footer-link">Privacy</a>
             <span className="dot">•</span>
-            <a href="#" className="footer-link">
-              Terms
-            </a>
+            <a href="#" className="footer-link">Terms</a>
             <span className="dot">•</span>
             <span className="footer-link">© Rosterly 2025</span>
           </footer>
@@ -474,66 +453,20 @@ export default function SubmitPage() {
         .page {
           min-height: 100vh;
           background: #f5f3ef;
-        }
-
-        .top-nav {
-          background-color: #f5f3ef;
           display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 1rem 2rem;
-          font-size: 13px;
-          direction: ltr;
-        }
-
-        .brand-btn {
-          background: none;
-          border: none;
-          padding: 0;
-          margin: 0;
-          font-weight: 600;
-          color: #4f553d;
-          cursor: pointer;
-        }
-
-        .nav-links {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-
-        .nav-link {
-          color: #666;
-          font-size: 12px;
-        }
-
-        .nav-sep {
-          width: 1px;
-          height: 14px;
-          background: #e0ddd5;
-          margin: 0 4px;
-        }
-
-        .nav-login {
-          border: none;
-          outline: none;
-          padding: 4px 14px;
-          border-radius: 999px;
-          background: #4f553d;
-          color: #f5f3ef;
-          font-size: 12px;
-          cursor: pointer;
+          justify-content: center;
         }
 
         .page-inner {
           width: 100%;
           max-width: 1440px;
-          margin: 0 auto;
           padding: 12px 32px 32px;
           font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
             sans-serif;
           color: #333;
         }
+
+        /* PAGE CONTENT */
 
         .content {
           max-width: 720px;
@@ -541,311 +474,99 @@ export default function SubmitPage() {
           text-align: center;
         }
 
-        .hero {
-          margin-bottom: 28px;
-        }
-
+        .hero { margin-bottom: 28px; }
         .logo-card {
-          width: 110px;
-          height: 110px;
-          margin: 0 auto 18px;
-          border-radius: 26px;
-          background: #f0e7d8;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.03);
+          width: 110px; height: 110px; margin: 0 auto 18px;
+          border-radius: 26px; background: #f0e7d8;
+          display: flex; align-items: center; justify-content: center;
+          box-shadow: 0 10px 25px rgba(0,0,0,0.03);
         }
-
-        .logo-img {
-          max-width: 70px;
-          height: auto;
-        }
-
-        .hero-title {
-          font-size: 20px;
-          margin-bottom: 6px;
-          color: #3a3e2d;
-          font-weight: 600;
-        }
-
-        .hero-subtitle {
-          font-size: 13px;
-          color: #777;
-          margin: 0;
-        }
+        .logo-img { max-width: 70px; height: auto; }
+        .hero-title { font-size: 20px; margin-bottom: 6px; color: #3a3e2d; font-weight: 600; }
+        .hero-subtitle { font-size: 13px; color: #777; margin: 0; }
 
         .card {
-          background: #efe6d8;
-          border-radius: 18px;
-          padding: 18px 22px 20px;
-          text-align: right;
-          box-shadow: 0 14px 35px rgba(0, 0, 0, 0.03);
+          background: #efe6d8; border-radius: 18px; padding: 18px 22px 20px;
+          text-align: right; box-shadow: 0 14px 35px rgba(0,0,0,0.03);
         }
-
-        .card-form {
-          margin-bottom: 32px;
-        }
-
-        .card-header {
-          margin-bottom: 16px;
-        }
-
+        .card-form { margin-bottom: 32px; }
+        .card-header { margin-bottom: 16px; }
         .card-title-row {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 8px;
-          margin-bottom: 4px;
+          display: flex; align-items: center; justify-content: space-between;
+          gap: 8px; margin-bottom: 4px;
         }
-
-        .card-title {
-          font-size: 15px;
-          margin: 0;
-          color: #3a3e2d;
-        }
-
-        .card-description {
-          margin: 0;
-          font-size: 12px;
-          color: #6b6458;
-        }
+        .card-title { font-size: 15px; margin: 0; color: #3a3e2d; }
+        .card-description { margin: 0; font-size: 12px; color: #6b6458; }
 
         .pill {
-          display: inline-flex;
-          align-items: center;
-          border-radius: 999px;
-          padding: 3px 10px;
-          font-size: 11px;
-          background: #e0d6c3;
-          color: #4f553d;
+          display: inline-flex; align-items: center; border-radius: 999px;
+          padding: 3px 10px; font-size: 11px; background: #e0d6c3; color: #4f553d;
         }
+        .pill.small { font-size: 10px; padding-inline: 8px; }
+        .pill-tag { background: #e5ddcc; font-size: 10px; padding: 2px 8px; }
+        .pill-tag--weekend { background: #e9d8c9; }
 
-        .pill.small {
-          font-size: 10px;
-          padding-inline: 8px;
-        }
-
-        .pill-tag {
-          background: #e5ddcc;
-          font-size: 10px;
-          padding: 2px 8px;
-        }
-
-        .pill-tag--weekend {
-          background: #e9d8c9;
-        }
-
-        .days-list {
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-          margin-bottom: 16px;
-        }
-
+        .days-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
         .day-row {
-          border-radius: 14px;
-          padding: 9px 12px;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 10px;
-          background: #f4eee2;
-          border: 1px solid #e3dacb;
-          transition: background 0.15s ease, box-shadow 0.15s ease;
+          border-radius: 14px; padding: 9px 12px; display: flex; align-items: center;
+          justify-content: space-between; gap: 10px; background: #f4eee2;
+          border: 1px solid #e3dacb; transition: background .15s, box-shadow .15s;
         }
+        .day-row--yes { background: #f1f6ea; border-color: #d3e2bf; }
+        .day-row--no { background: #f4eee2; border-color: #e3dacb; }
+        .day-row:hover { box-shadow: 0 8px 18px rgba(0,0,0,0.04); }
 
-        .day-row--yes {
-          background: #f1f6ea;
-          border-color: #d3e2bf;
-        }
+        .day-main { display: flex; align-items: center; gap: 8px; }
+        .day-label { font-size: 13px; color: #3a3e2d; font-weight: 500; }
 
-        .day-row--no {
-          background: #f4eee2;
-          border-color: #e3dacb;
-        }
+        .day-side { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; width: 65%; }
 
-        .day-row:hover {
-          box-shadow: 0 8px 18px rgba(0, 0, 0, 0.04);
-        }
-
-        .day-main {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-
-        .day-label {
-          font-size: 13px;
-          color: #3a3e2d;
-          font-weight: 500;
-        }
-
-        .day-side {
-          display: flex;
-          flex-direction: column;
-          align-items: flex-end;
-          gap: 4px;
-          width: 65%;
-        }
-
-        .choice-group {
-          display: flex;
-          gap: 4px;
-          justify-content: flex-end;
-          align-items: center;
-          flex-wrap: wrap;
-        }
-
-        .we-label {
-          font-size: 11px;
-          color: #6f6456;
-          margin-left: 4px;
-        }
+        .choice-group { display: flex; gap: 4px; justify-content: flex-end; align-items: center; flex-wrap: wrap; }
+        .we-label { font-size: 11px; color: #6f6456; margin-left: 4px; }
 
         .choice-pill {
-          border-radius: 999px;
-          border: 1px solid #d3ccbf;
-          background: #f7f2e9;
-          padding: 3px 7px;
-          font-size: 11px;
-          color: #746b5e;
-          cursor: pointer;
-          min-width: 52px;
+          border-radius: 999px; border: 1px solid #d3ccbf; background: #f7f2e9;
+          padding: 3px 7px; font-size: 11px; color: #746b5e; cursor: pointer; min-width: 52px;
         }
+        .choice-pill--active { background: #4f553d; color: #f5f3ef; border-color: #4f553d; }
 
-        .choice-pill--active {
-          background: #4f553d;
-          color: #f5f3ef;
-          border-color: #4f553d;
-        }
-
-        .field {
-          margin-bottom: 16px;
-        }
-
-        .field-label {
-          font-size: 12px;
-          font-weight: 500;
-          color: #3a3e2d;
-          display: block;
-          margin-bottom: 2px;
-        }
-
-        .field-help {
-          font-size: 11px;
-          color: #7c7364;
-          margin: 0 0 6px;
-        }
-
+        .field { margin-bottom: 16px; }
+        .field-label { font-size: 12px; font-weight: 500; color: #3a3e2d; display: block; margin-bottom: 2px; }
+        .field-help { font-size: 11px; color: #7c7364; margin: 0 0 6px; }
         .field-textarea {
-          width: 100%;
-          border-radius: 12px;
-          border: 1px solid #d9cfbf;
-          padding: 8px 10px;
-          font-size: 12px;
-          resize: vertical;
-          background: #f7f2e9;
-          color: #3a3e2d;
-          outline: none;
+          width: 100%; border-radius: 12px; border: 1px solid #d9cfbf; padding: 8px 10px;
+          font-size: 12px; resize: vertical; background: #f7f2e9; color: #3a3e2d; outline: none;
         }
+        .field-textarea:focus { border-color: #b4b08f; }
 
-        .field-textarea:focus {
-          border-color: #b4b08f;
-        }
-
-        .actions {
-          text-align: left;
-        }
-
+        .actions { text-align: left; }
         .primary-button {
-          border: none;
-          outline: none;
-          padding: 8px 22px;
-          border-radius: 999px;
-          background: #4f553d;
-          color: #f5f3ef;
-          font-size: 13px;
-          font-weight: 500;
-          cursor: pointer;
-          box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-          transition: background 0.12s ease, transform 0.08s ease,
-            box-shadow 0.12s ease;
+          border: none; outline: none; padding: 8px 22px; border-radius: 999px;
+          background: #4f553d; color: #f5f3ef; font-size: 13px; font-weight: 500;
+          cursor: pointer; box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+          transition: background .12s, transform .08s, box-shadow .12s;
         }
+        .primary-button:hover:not(:disabled) { background: #444933; transform: translateY(-1px); box-shadow: 0 10px 22px rgba(0,0,0,0.18); }
+        .primary-button:active:not(:disabled) { transform: translateY(0); box-shadow: 0 4px 10px rgba(0,0,0,0.14); }
+        .primary-button:disabled { opacity: .7; cursor: default; box-shadow: none; }
 
-        .primary-button:hover:not(:disabled) {
-          background: #444933;
-          transform: translateY(-1px);
-          box-shadow: 0 10px 22px rgba(0, 0, 0, 0.18);
-        }
-
-        .primary-button:active:not(:disabled) {
-          transform: translateY(0);
-          box-shadow: 0 4px 10px rgba(0, 0, 0, 0.14);
-        }
-
-        .primary-button:disabled {
-          opacity: 0.7;
-          cursor: default;
-          box-shadow: none;
-        }
-
-        .status-text {
-          margin: 8px 0 0;
-          font-size: 11px;
-          color: #4b4336;
-        }
-
-        .status-help {
-          margin: 4px 0 0;
-          font-size: 10px;
-          color: #8b8172;
-        }
+        .status-text { margin: 8px 0 0; font-size: 11px; color: #4b4336; }
+        .status-help { margin: 4px 0 0; font-size: 10px; color: #8b8172; }
 
         .footer {
-          margin-top: 60px;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          gap: 6px;
-          font-size: 10px;
-          color: #aaa08e;
+          margin-top: 60px; display: flex; justify-content: center; align-items: center;
+          gap: 6px; font-size: 10px; color: #aaa08e;
         }
-
-        .footer-link {
-          text-decoration: none;
-          color: #b2a894;
-        }
-
-        .dot {
-          color: #c8bfad;
-        }
+        .footer-link { text-decoration: none; color: #b2a894; }
+        .dot { color: #c8bfad; }
 
         @media (max-width: 768px) {
-          .page-inner {
-            padding-inline: 16px;
-          }
-
-          .content {
-            margin-top: 26px;
-          }
-
-          .card-title-row {
-            flex-direction: column;
-            align-items: flex-start;
-          }
-
-          .day-side {
-            width: 100%;
-          }
-
-          .choice-group {
-            justify-content: space-between;
-          }
-
-          .actions {
-            text-align: right;
-          }
+          .page-inner { padding-inline: 16px; }
+          .content { margin-top: 26px; }
+          .card-title-row { flex-direction: column; align-items: flex-start; }
+          .day-side { width: 100%; }
+          .choice-group { justify-content: space-between; }
+          .actions { text-align: right; }
         }
       `}</style>
     </main>

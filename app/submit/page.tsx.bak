@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import LoginModal from '@/components/LoginModal';
 
 const HOME_ROUTE = '/rosterly';
 
@@ -25,10 +24,11 @@ const WEEKDAYS: { key: WeekdayKey; label: string }[] = [
 const CHOICES_WEEKDAY: WeekdayChoice[] = ['פתוח', 'בוקר', 'ערב', 'לא זמין'];
 const CHOICES_WEEKEND: WeekendChoice[] = ['פתוח', 'שישי', 'מוצ״ש', 'לא זמין'];
 
+// Get Sunday of current week as YYYY-MM-DD
 function getCurrentWeekStartSunday(): string {
   const today = new Date();
-  const day = today.getDay();
-  const diff = today.getDate() - day;
+  const day = today.getDay(); // 0 Sun, 1 Mon, ...
+  const diff = today.getDate() - day; // go back to Sunday
   const sunday = new Date(today);
   sunday.setDate(diff);
   sunday.setHours(0, 0, 0, 0);
@@ -43,7 +43,6 @@ export default function SubmitPage() {
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState('');
   const [globalNote, setGlobalNote] = useState('');
-  const [showLoginModal, setShowLoginModal] = useState(false);
 
   const [weekdayChoices, setWeekdayChoices] = useState<
     Record<WeekdayKey, WeekdayChoice>
@@ -55,26 +54,23 @@ export default function SubmitPage() {
     thu: 'פתוח',
   });
 
-  const [weekendChoice, setWeekendChoice] =
-    useState<WeekendChoice>('לא זמין');
+  const [weekendChoice, setWeekendChoice] = useState<WeekendChoice>('לא זמין');
 
   const weekStart = useMemo(() => getCurrentWeekStartSunday(), []);
 
+  // Load user + existing submission
   useEffect(() => {
     const init = async () => {
       try {
         const { data, error } = await supabase.auth.getUser();
-        if (!error && data.user) {
-          setEmail(data.user.email ?? null);
-        } else {
-          setEmail(null);
-        }
-
         if (error || !data.user) {
-          setLoading(false);
+          router.replace('/auth');
           return;
         }
 
+        setEmail(data.user.email ?? null);
+
+        // find linked employee
         const { data: emp, error: empErr } = await supabase
           .from('employees')
           .select('id')
@@ -91,6 +87,7 @@ export default function SubmitPage() {
 
         setEmployeeId(emp.id as string);
 
+        // try to load existing submission for this week
         const { data: submission, error: subErr } = await supabase
           .from('submissions')
           .select('id')
@@ -171,6 +168,7 @@ export default function SubmitPage() {
     setStatus('שומר...');
 
     try {
+      // upsert submission row
       const { data: submission, error: subErr } = await supabase
         .from('submissions')
         .upsert(
@@ -188,11 +186,13 @@ export default function SubmitPage() {
 
       const submissionId = submission.id as string;
 
+      // clear previous days
       await supabase
         .from('submission_days')
         .delete()
         .eq('submission_id', submissionId);
 
+      // weekday rows
       const weekdayRows = WEEKDAYS.map((d) => {
         const choice = weekdayChoices[d.key];
         const available = choice !== 'לא זמין';
@@ -206,6 +206,7 @@ export default function SubmitPage() {
         };
       });
 
+      // weekend rows from combined choice (Fri + Sat)
       let friAvailable = false;
       let satAvailable = false;
       switch (weekendChoice) {
@@ -265,8 +266,7 @@ export default function SubmitPage() {
   }
 
   const handleLoginClick = () => {
-    if (email) router.push('/dashboard');
-    else setShowLoginModal(true);
+    router.push('/rosterly/login');
   };
 
   const goHome = () => router.push(HOME_ROUTE);
@@ -275,19 +275,18 @@ export default function SubmitPage() {
     return (
       <main dir="rtl" className="page">
         <div className="page-inner">
-          <div className="center-card">
-            טוען את טופס המשמרות...
-          </div>
+          <div className="center-card">טוען את טופס המשמרות...</div>
         </div>
         <style jsx>{`
           .page {
             min-height: 100vh;
             background: #f5f3ef;
+            display: flex;
+            justify-content: center;
           }
           .page-inner {
             width: 100%;
             max-width: 1200px;
-            margin: 0 auto;
             padding: 16px 32px 40px;
             font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
               sans-serif;
@@ -309,28 +308,33 @@ export default function SubmitPage() {
 
   return (
     <main dir="rtl" className="page">
-      {/* Full-width nav */}
-      <nav className="top-nav">
-        <button className="brand-btn" type="button" onClick={goHome}>
-          Rosterly
-        </button>
-        <div className="nav-links">
-          <span className="nav-link">צוות</span>
-          <span className="nav-link">פורום</span>
-          <span className="nav-link">מדריכים</span>
-          <span className="nav-sep" />
-          <button
-            className="nav-login"
-            type="button"
-            onClick={handleLoginClick}
-          >
-            {email ? 'מחובר/ת' : 'להתחבר'}
-          </button>
-        </div>
-      </nav>
-
       <div className="page-inner">
+        {/* Top nav – same structure / look as main Rosterly page */}
+        <nav className="top-nav">
+          <div
+            className="nav-logo"
+            style={{ cursor: 'pointer' }}
+            onClick={goHome}
+          >
+            Rosterly
+          </div>
+          <div className="nav-links">
+            <button
+              className="login-btn"
+              type="button"
+              onClick={handleLoginClick}
+            >
+              {email ? 'מחובר/ת' : 'להתחבר'}
+            </button>
+            <a href="/rosterly/team?lang=he">צוות</a>
+            <a href="/rosterly/forum?lang=he">פורום</a>
+            <a href="/rosterly/tutorials?lang=he">מדריכים</a>
+          </div>
+        </nav>
+
+        {/* Center content */}
         <div className="content">
+          {/* Logo + title */}
           <section className="hero">
             <div className="logo-card">
               <img
@@ -345,13 +349,12 @@ export default function SubmitPage() {
             </p>
           </section>
 
+          {/* Form card */}
           <section className="card card-form">
             <div className="card-header">
               <div className="card-title-row">
                 <h2 className="card-title">טופס זמינות לשבוע הקרוב</h2>
-                <span className="pill small">
-                  שבוע שמתחיל ב־ {weekStart}
-                </span>
+                <span className="pill small">שבוע שמתחיל ב־ {weekStart}</span>
               </div>
               <p className="card-description">
                 לכל יום בחר/י אם את/ה פתוח/ה לכל משמרת, מעדיפ/ה בוקר, ערב או לא
@@ -359,6 +362,7 @@ export default function SubmitPage() {
               </p>
             </div>
 
+            {/* Weekday rows */}
             <div className="days-list">
               {WEEKDAYS.map((d) => {
                 const choice = weekdayChoices[d.key];
@@ -398,6 +402,7 @@ export default function SubmitPage() {
                 );
               })}
 
+              {/* Weekend combined row */}
               <div
                 className={
                   'day-row' +
@@ -433,6 +438,7 @@ export default function SubmitPage() {
               </div>
             </div>
 
+            {/* Note */}
             <div className="field">
               <label className="field-label">הערה כללית למנהל</label>
               <p className="field-help">
@@ -446,6 +452,7 @@ export default function SubmitPage() {
               />
             </div>
 
+            {/* Actions */}
             <div className="actions">
               <button
                 type="button"
@@ -476,79 +483,60 @@ export default function SubmitPage() {
         </div>
       </div>
 
-      <LoginModal
-        open={showLoginModal}
-        onClose={() => setShowLoginModal(false)}
-        onSubmit={async (idNumber, phone) => {
-          // TODO: replace with real login logic (ID + phone → Supabase session)
-          console.log('Login attempt from submit page:', { idNumber, phone });
-        }}
-      />
-
       <style jsx>{`
         .page {
           min-height: 100vh;
           background: #f5f3ef;
-        }
-
-        .top-nav {
-          background-color: #f5f3ef;
           display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 1rem 2rem;
-          font-size: 13px;
-          direction: ltr;
-        }
-
-        .brand-btn {
-          background: none;
-          border: none;
-          padding: 0;
-          margin: 0;
-          font-weight: 600;
-          color: #4f553d;
-          cursor: pointer;
-        }
-
-        .nav-links {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-
-        .nav-link {
-          color: #666;
-          font-size: 12px;
-        }
-
-        .nav-sep {
-          width: 1px;
-          height: 14px;
-          background: #e0ddd5;
-          margin: 0 4px;
-        }
-
-        .nav-login {
-          border: none;
-          outline: none;
-          padding: 4px 14px;
-          border-radius: 999px;
-          background: #4f553d;
-          color: #f5f3ef;
-          font-size: 12px;
-          cursor: pointer;
+          justify-content: center;
         }
 
         .page-inner {
           width: 100%;
           max-width: 1440px;
-          margin: 0 auto;
           padding: 12px 32px 32px;
           font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
             sans-serif;
           color: #333;
         }
+
+        /* NAV – copied from main Rosterly page */
+        .top-nav {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 1.25rem 2.5rem 0;
+          font-size: 0.85rem;
+          direction: ltr;
+        }
+
+        .nav-logo {
+          font-weight: 600;
+          color: #4f553d;
+        }
+
+        .nav-links {
+          display: flex;
+          align-items: center;
+          gap: 1.5rem;
+        }
+
+        .nav-links a {
+          color: #6d6d6d;
+          text-decoration: none;
+        }
+
+        .nav-links .login-btn {
+          border-radius: 999px;
+          padding: 0.35rem 1.5rem;
+          border: none;
+          background: #4f553d;
+          color: #f5f3ef;
+          cursor: pointer;
+          font-size: 0.8rem;
+        }
+
+        /* PAGE CONTENT */
 
         .content {
           max-width: 720px;
@@ -784,6 +772,19 @@ export default function SubmitPage() {
           font-weight: 500;
           cursor: pointer;
           box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+          transition: background 0.12s ease, transform 0.08s ease,
+            box-shadow 0.12s ease;
+        }
+
+        .primary-button:hover:not(:disabled) {
+          background: #444933;
+          transform: translateY(-1px);
+          box-shadow: 0 10px 22px rgba(0, 0, 0, 0.18);
+        }
+
+        .primary-button:active:not(:disabled) {
+          transform: translateY(0);
+          box-shadow: 0 4px 10px rgba(0, 0, 0, 0.14);
         }
 
         .primary-button:disabled {

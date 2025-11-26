@@ -1,4 +1,203 @@
-import { Header, Footer } from "../layout";
-import { STR, useLang } from "../i18n";
-export default function Page({searchParams}:any){ const lang=useLang(searchParams); const t=STR[lang];
-return (<div className={t.dir==='rtl'?'rtl':''}><Header lang={lang}/><section className="hero"><div className="container"><h1 className="title">{t['team']}</h1><p className="subtitle">{t.empty}</p><div className="card" style={ marginTop: 16 }>#team • placeholder</div></div></section><Footer/></div>); }
+// app/rosterly/team/page.tsx
+'use client';
+
+import { useEffect, useMemo, useState } from 'react';
+import { supabase } from '@/lib/supabase';
+
+type Employee = {
+  id: string;
+  full_name: string | null;
+  role: string | null;
+  start_date?: string | null;   // employees.hired_date
+  birthday?: string | null;     // employees.birth_date
+  active?: boolean | null;
+};
+
+type Bucket = 'management'|'op'|'staff';
+
+export default function TeamPage() {
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const [filter, setFilter] = useState<'all'|Bucket>('all');
+  const [q, setQ] = useState('');
+  const dq = useDebounce(q, 250);
+
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      setErrorMsg(null);
+
+      const cols = 'id, full_name, role, start_date:hired_date, birthday:birth_date, active';
+      let { data, error } = await supabase
+        .from('employees')
+        .select(cols)
+        .order('full_name', { ascending: true });
+
+      if (error) {
+        const fb = await supabase
+          .from('employees')
+          .select('id, full_name, role, active')
+          .order('full_name', { ascending: true });
+        if (fb.error) {
+          setErrorMsg('שגיאה בטעינת רשימת הצוות.');
+          setEmployees([]);
+          setLoading(false);
+          return;
+        }
+        data = fb.data as any[];
+      }
+
+      const activeOnly = (data ?? []).filter((e: any) => e.active !== false);
+      setEmployees(activeOnly as Employee[]);
+      setLoading(false);
+    })();
+  }, []);
+
+  const bucketFor = (role?: string | null): Bucket => {
+    if (!role) return 'staff';
+    const r = role.toLowerCase();
+    if (r.includes('manager') || r.includes('מנהל') || r.includes('assistant') || r.includes('head cashier') || r.includes('key holder')) return 'management';
+    if (r.includes('op') || r.includes('operations') || r.includes('מחסנאי') || r.includes('warehouse')) return 'op';
+    return 'staff';
+  };
+
+  const filtered = useMemo(() => {
+    const text = dq.trim().toLowerCase();
+    return employees.filter((e) => {
+      if (text) {
+        const hay = `${e.full_name ?? ''} ${e.role ?? ''}`.toLowerCase();
+        if (!hay.includes(text)) return false;
+      }
+      if (filter === 'all') return true;
+      return bucketFor(e.role) === filter;
+    });
+  }, [employees, dq, filter]);
+
+  const groups = useMemo(() => {
+    const management = filtered.filter((e) => bucketFor(e.role) === 'management');
+    const op = filtered.filter((e) => bucketFor(e.role) === 'op');
+    const staff = filtered.filter((e) => bucketFor(e.role) === 'staff');
+    return { management, op, staff };
+  }, [filtered]);
+
+  // ---- Inline styles (Rosterly palette) ----
+  const sMain: React.CSSProperties = { display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' };
+  const sLogo: React.CSSProperties = { width: 80, height: 'auto', marginTop: 10, marginBottom: 8 };
+  const sH2: React.CSSProperties = { margin: '8px 0 4px', fontSize: 20, color: '#3a3e2d', fontWeight: 600 as const };
+  const sH3: React.CSSProperties = { margin: 0, fontSize: 13, color: '#777', fontWeight: 400 as const };
+  const sWrap: React.CSSProperties = { width: '100%', maxWidth: 960, margin: '20px auto 0', textAlign: 'right' as const };
+  const sToolbar: React.CSSProperties = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' as const, marginBottom: 12 };
+  const sPills: React.CSSProperties = { display: 'flex', gap: 6, flexWrap: 'wrap' as const };
+  const pillBase: React.CSSProperties = { borderRadius: 999, padding: '6px 12px', fontSize: 12, border: '1px solid #d9cfbf', background: '#e0d6c3', color: '#4f553d', cursor: 'pointer' };
+  const pillOn: React.CSSProperties   = { ...pillBase, background: '#4f553d', color: '#f5f3ef', borderColor: '#4f553d' };
+  const sSearch: React.CSSProperties = { padding: '8px 10px', borderRadius: 12, border: '1px solid #d9cfbf', background: '#f7f2e9', color: '#3a3e2d', minWidth: 240 };
+  const sNote: React.CSSProperties = { background: '#f4eee2', color: '#6b6458', borderRadius: 999, padding: '10px 16px', fontSize: 12, textAlign: 'center' as const, margin: '8px 0' };
+  const sCard: React.CSSProperties = { background: '#efe6d8', borderRadius: 18, padding: '14px 18px 12px', boxShadow: '0 12px 30px rgba(0,0,0,.03)', marginBottom: 18 };
+  const sCardHead: React.CSSProperties = { display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8, marginBottom: 10 };
+  const sTitle: React.CSSProperties = { fontSize: 14, fontWeight: 600, color: '#3a3e2d' };
+  const sHint: React.CSSProperties = { fontSize: 11, color: '#8b8172' };
+  const sList: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: 8 };
+  const sRow: React.CSSProperties = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 14, background: '#f7f2e9', border: '1px solid #e3dacb' };
+  const sMainCol: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: 2 };
+  const sName: React.CSSProperties = { fontSize: 13, fontWeight: 600, color: '#3a3e2d' };
+  const sRole: React.CSSProperties = { fontSize: 11, color: '#6b6458' };
+  const sMeta: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 6 };
+  const sBadge: React.CSSProperties = { borderRadius: 999, padding: '2px 8px', fontSize: 10, border: '1px solid #d9cfbf', background: '#f0e7d8', color: '#4f553d' };
+
+  return (
+    <main style={sMain} dir="rtl" data-page="team-inline-v1">
+      <img src="/logo.png" alt="Rosterly" style={sLogo} />
+      <h2 style={sH2}>צוות החנות</h2>
+      <h3 style={sH3}>תמונה חיה של עובדי החנות – לפי תפקיד וותק בחברה.</h3>
+
+      <section style={sWrap}>
+        <div style={sToolbar}>
+          <div style={sPills}>
+            <button style={filter==='all'?pillOn:pillBase} onClick={() => setFilter('all')}>הכל</button>
+            <button style={filter==='management'?pillOn:pillBase} onClick={() => setFilter('management')}>הנהלה</button>
+            <button style={filter==='op'?pillOn:pillBase} onClick={() => setFilter('op')}>OP</button>
+            <button style={filter==='staff'?pillOn:pillBase} onClick={() => setFilter('staff')}>צוות</button>
+          </div>
+          <input style={sSearch} placeholder="חיפוש לפי שם / תפקיד" value={q} onChange={(e)=>setQ(e.target.value)} />
+        </div>
+
+        {loading && <div style={sNote}>טוען את רשימת הצוות...</div>}
+        {errorMsg && <div style={{...sNote, background:'#fde1e1', color:'#7c2222'}}>{errorMsg}</div>}
+        {!loading && !errorMsg && filtered.length === 0 && <div style={sNote}>לא נמצאו עובדים תואמים למסננים.</div>}
+
+        {!loading && !errorMsg && filtered.length > 0 && (
+          <>
+            {renderCard('הנהלה','מנהלי סניף, עוזרי מנהלים, סגנים.', groups.management, {sCard,sCardHead,sTitle,sHint,sList,sRow,sMainCol,sName,sRole,sMeta,sBadge})}
+            {renderCard('OP','אופרציה, מחסן ותפעול.', groups.op, {sCard,sCardHead,sTitle,sHint,sList,sRow,sMainCol,sName,sRole,sMeta,sBadge})}
+            {renderCard('צוות חנות','מכירה, קופה ותפקידים נוספים.', groups.staff, {sCard,sCardHead,sTitle,sHint,sList,sRow,sMainCol,sName,sRole,sMeta,sBadge})}
+          </>
+        )}
+      </section>
+    </main>
+  );
+}
+
+function renderCard(
+  title: string,
+  hint: string,
+  list: Employee[],
+  css: Record<string, React.CSSProperties>
+) {
+  if (!list || list.length === 0) return null;
+
+  const tenure = (start?: string|null) => {
+    if (!start) return null;
+    const d = new Date(start); if (isNaN(d.getTime())) return null;
+    const now = new Date();
+    let y = now.getFullYear() - d.getFullYear();
+    let m = now.getMonth() - d.getMonth();
+    if (m < 0){ y -= 1; m += 12; }
+    if (y <= 0 && m <= 0) return null;
+    if (y <= 0) return `${m} חוד׳ בחברה`;
+    if (m < 3)  return `${y} שנים בחברה`;
+    return `${y} שנים ו־${m} חוד׳ בחברה`;
+  };
+
+  const bday = (b?: string|null) => {
+    if (!b) return null;
+    const d = new Date(b); if (isNaN(d.getTime())) return null;
+    const dd = String(d.getDate()).padStart(2,'0');
+    const mm = String(d.getMonth()+1).padStart(2,'0');
+    return `${dd}.${mm}`;
+  };
+
+  return (
+    <section style={css.sCard}>
+      <div style={css.sCardHead}>
+        <span style={css.sTitle}>{title}</span>
+        <span style={css.sHint}>{hint}</span>
+      </div>
+      <div style={css.sList}>
+        {list.map((e) => {
+          const t = tenure(e.start_date);
+          const bd = bday(e.birthday);
+          return (
+            <div key={e.id} style={css.sRow}>
+              <div style={css.sMainCol}>
+                <span style={css.sName}>{e.full_name ?? 'ללא שם'}</span>
+                <span style={css.sRole}>{e.role ?? ''}</span>
+              </div>
+              <div style={css.sMeta}>
+                {t && <span style={css.sBadge}>{t}</span>}
+                {bd && <span style={css.sBadge}>יום הולדת: {bd}</span>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function useDebounce<T>(value:T, delay=250): T {
+  const [v, setV] = useState(value);
+  useEffect(() => { const id = setTimeout(() => setV(value), delay); return () => clearTimeout(id); }, [value, delay]);
+  return v;
+}

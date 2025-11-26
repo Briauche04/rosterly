@@ -1,60 +1,96 @@
+// app/rosterly/i18n.ts
+// Fix useLang to support URLSearchParams safely (no direct .lang property reads)
+
 export type Lang = "he" | "en" | "ru";
 
-export const STR: Record<Lang, any> = {
+type Strings = {
+  dir: "rtl" | "ltr";
+  login: string;
+  team: string;
+  forum: string;
+  tutorials: string;
+  hero_title: string;
+  hero_sub: string;
+  card_submit_title: string;
+  card_submit_body: string;
+  card_schedule_title: string;
+  card_schedule_body: string;
+  card_forum_title: string;
+  card_forum_body: string;
+  card_tutorials_title: string;
+  card_tutorials_body: string;
+  empty: string;
+};
+
+export const STR: Record<Lang, Strings> = {
   he: {
     dir: "rtl",
     login: "להתחבר",
     team: "צוות",
     forum: "פורום",
     tutorials: "מדריכים",
-    hero_title: "ניהול משמרות לצוות החנות",
-    hero_sub: "הגשות זמינות, שיבוצים ופורום הודעות במקום אחד.",
+    hero_title: "הגשת משמרות – Rosterly",
+    hero_sub: "הגשות, אישורים וסידור שבועי מסודר במקום אחד.",
     card_submit_title: "הגשת משמרות",
-    card_submit_body: "תקופת הגשה: מיום א׳ עד יום ג׳ בשעה 12:00.",
-    card_schedule_title: "סידור עבודה",
-    card_schedule_body: "צפייה ושיבוץ של משמרות לפי שבוע.",
+    card_submit_body: "סימון זמינות לשבוע הקרוב בצורה נקייה וידידותית.",
+    card_schedule_title: "כלי מנהלים",
+    card_schedule_body: "אישור הגשות, סימון תקין/נדחה והפקת סידור שבועי.",
     card_forum_title: "פורום",
-    card_forum_body: "ביטולים, החלפה, קבצים והודעות לצוות והנהלה."
+    card_forum_body: "מקום לשאלות ועדכונים לצוות החנות.",
+    card_tutorials_title: "מדריכים",
+    card_tutorials_body: "מדריכים, נהלים וכלים לצוות החנות.",
+    empty: "עדיין אין תוכן בדף הזה.",
   },
-
   en: {
     dir: "ltr",
     login: "Log in",
     team: "Team",
     forum: "Forum",
     tutorials: "Tutorials",
-    hero_title: "Shift management for your store team",
-    hero_sub: "Availability submissions, rosters, and a message forum in one place.",
-    card_submit_title: "Submit shifts",
-    card_submit_body: "Submission window: Sunday to Tuesday at 12:00.",
-    card_schedule_title: "Weekly schedule",
-    card_schedule_body: "View and manage shifts by week.",
+    hero_title: "Submit shifts — Rosterly",
+    hero_sub: "Submissions, approvals and weekly schedules in one place.",
+    card_submit_title: "Submit availability",
+    card_submit_body: "Set your availability for the upcoming week.",
+    card_schedule_title: "Manager tools",
+    card_schedule_body:
+      "Review submissions, approve/decline and generate weekly schedules.",
     card_forum_title: "Forum",
-    card_forum_body: "Cancellations, swaps, files and messages for staff and management."
+    card_forum_body: "Ask questions and share updates with the team.",
+    card_tutorials_title: "Tutorials",
+    card_tutorials_body: "Guides, policies and how-tos for store staff.",
+    empty: "This page has no content yet.",
   },
-
   ru: {
     dir: "ltr",
     login: "Войти",
     team: "Команда",
     forum: "Форум",
     tutorials: "Инструкции",
-    hero_title: "Управление сменами для команды магазина",
-    hero_sub: "Подача доступности, графики и форум сообщений в одном месте.",
-    card_submit_title: "Подать смены",
-    card_submit_body: "Период подачи: с воскресенья по вторник до 12:00.",
-    card_schedule_title: "График работы",
-    card_schedule_body: "Просмотр и распределение смен по неделям.",
+    hero_title: "Подача смен — Rosterly",
+    hero_sub: "Заявки, утверждения и расписания в одном месте.",
+    card_submit_title: "Подать доступность",
+    card_submit_body: "Укажите свою доступность на ближайшую неделю.",
+    card_schedule_title: "Инструменты менеджера",
+    card_schedule_body:
+      "Проверка заявок, утверждение/отклонение и создание расписания.",
     card_forum_title: "Форум",
-    card_forum_body: "Отмена, обмен, файлы и сообщения для команды и руководства."
-  }
+    card_forum_body: "Вопросы и обновления для команды.",
+    card_tutorials_title: "Инструкции",
+    card_tutorials_body: "Руководства и политики для сотрудников магазина.",
+    empty: "На этой странице пока нет содержимого.",
+  },
 };
 
-import { use } from "react";
+/** Accept URLSearchParams or {lang?: string} */
+export function useLang(
+  params: URLSearchParams | { lang?: string } | undefined
+): Lang {
+  const q =
+    params && typeof (params as any).get === "function"
+      ? (params as URLSearchParams).get("lang") ?? "he"
+      : (params as { lang?: string } | undefined)?.lang ?? "he";
 
-export function useLang(searchParams: Promise<{ lang?: string }>): Lang {
-  const params = use(searchParams);         // ← THIS FIXES THE ERROR
-  const q = params?.lang ?? "he";
   const l = String(q).toLowerCase();
-  return l === "en" || l === "ru" ? (l as Lang) : "he";
+  if (l === "en" || l === "ru") return l;
+  return "he";
 }

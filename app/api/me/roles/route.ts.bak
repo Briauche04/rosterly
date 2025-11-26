@@ -4,26 +4,24 @@ import { cookies } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
 
 export async function GET() {
-  const cookieStore = cookies(); // sync in Next 15
+  const cookieStore = await cookies();
 
-  // Look for the access token cookie set by Supabase Auth
+  // Common cookie names used by Supabase; adjust if your setup differs
   const accessToken =
     cookieStore.get('sb-access-token')?.value ??
     cookieStore.get('access-token')?.value ??
     null;
 
+  // Build a client that forwards the user's JWT for RLS
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
-  // Bind the user’s JWT to the client so RLS applies as that user
   const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     global: accessToken ? { headers: { Authorization: `Bearer ${accessToken}` } } : {},
   });
 
-  // Resolve current user
+  // Resolve current user from JWT (no @supabase/ssr required)
   let userId: string | null = null;
   if (accessToken) {
-    // Server-side form with token param avoids reliance on server session
     const { data, error } = await supabase.auth.getUser(accessToken);
     if (!error && data?.user) userId = data.user.id;
   }
@@ -31,7 +29,7 @@ export async function GET() {
     return NextResponse.json({ roles: [], isManager: false }, { status: 200 });
   }
 
-  // Read roles for this user (RLS: user can read own rows)
+  // Read roles for this user (RLS should allow own-row reads)
   const { data, error } = await supabase
     .from('user_roles')
     .select('role_code')
@@ -41,7 +39,7 @@ export async function GET() {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const roles = (data ?? []).map((r) => r.role_code);
+  const roles = (data ?? []).map(r => r.role_code);
   const isManager = roles.includes('manager') || roles.includes('admin');
   return NextResponse.json({ roles, isManager }, { status: 200 });
 }

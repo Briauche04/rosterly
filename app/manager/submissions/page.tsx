@@ -1,10 +1,9 @@
+// app/manager/submissions/page.tsx
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-
-const HOME_ROUTE = '/rosterly';
 
 type Status = 'pending' | 'approved' | 'rejected';
 
@@ -38,14 +37,11 @@ function getCurrentWeekStartSunday(): string {
 
 export default function ManagerSubmissionsPage() {
   const router = useRouter();
-  const [email, setEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
   const [submissions, setSubmissions] = useState<SubmissionRow[]>([]);
   const [statusMsg, setStatusMsg] = useState('');
-  const [filterRole, setFilterRole] = useState<'all' | 'manager' | 'op' | 'staff'>(
-    'all'
-  );
+  const [filterRole, setFilterRole] = useState<'all' | 'manager' | 'op' | 'staff'>('all');
   const [savingId, setSavingId] = useState<string | null>(null);
 
   const weekStart = useMemo(() => getCurrentWeekStartSunday(), []);
@@ -59,8 +55,6 @@ export default function ManagerSubmissionsPage() {
           return;
         }
 
-        setEmail(data.user.email ?? null);
-
         const { data: userRoles, error: rolesErr } = await supabase
           .from('user_roles')
           .select('role_code')
@@ -72,9 +66,8 @@ export default function ManagerSubmissionsPage() {
         }
 
         const allowed = (userRoles ?? []).some((r) =>
-          ['manager', 'op'].includes(r.role_code)
+          ['manager', 'op', 'admin'].includes(r.role_code)
         );
-
         if (!allowed) {
           setAuthError('אין לך הרשאה לצפות בדף זה.');
           return;
@@ -141,16 +134,11 @@ export default function ManagerSubmissionsPage() {
       }
 
       setSubmissions((prev) =>
-        prev.map((s) =>
-          s.id === row.id ? { ...s, status: newStatus } : s
-        )
+        prev.map((s) => (s.id === row.id ? { ...s, status: newStatus } : s))
       );
 
-      if (newStatus === 'approved') {
-        setStatusMsg('ההגשה סומנה כתקינה.');
-      } else if (newStatus === 'rejected') {
-        setStatusMsg('ההגשה נדחתה – העובד/ת יקבל/תקבל התראה להגשה מחדש.');
-      }
+      if (newStatus === 'approved') setStatusMsg('ההגשה סומנה כתקינה.');
+      else if (newStatus === 'rejected') setStatusMsg('ההגשה נדחתה – העובד/ת יקבל/תקבל התראה להגשה מחדש.');
     } catch {
       setStatusMsg('שגיאת מערכת בעדכון סטטוס.');
     } finally {
@@ -174,15 +162,6 @@ export default function ManagerSubmissionsPage() {
     if (filterRole === 'all') return true;
     return roleBucket(s.employees?.role ?? null) === filterRole;
   });
-
-  function handleLoginClick() {
-    if (email) router.push('/dashboard');
-    else router.push('/rosterly/login?lang=he');
-  }
-
-  function goHome() {
-    router.push(HOME_ROUTE);
-  }
 
   function buildDayChips(row: SubmissionRow) {
     const map = new Map<string, boolean>();
@@ -234,28 +213,9 @@ export default function ManagerSubmissionsPage() {
           <div className="center-card">טוען הגשות...</div>
         </div>
         <style jsx>{`
-          .page {
-            min-height: 100vh;
-            background: #f5f3ef;
-          }
-          .page-inner {
-            width: 100%;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 16px 32px 40px;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
-              sans-serif;
-          }
-          .center-card {
-            margin: 140px auto 0;
-            max-width: 460px;
-            padding: 20px 24px;
-            border-radius: 18px;
-            background: #f0e7d8;
-            text-align: center;
-            font-size: 14px;
-            color: #4f553d;
-          }
+          .page { min-height: 100vh; background: #f5f3ef; }
+          .page-inner { width: 100%; max-width: 1200px; margin: 0 auto; padding: 16px 32px 40px; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+          .center-card { margin: 140px auto 0; max-width: 460px; padding: 20px 24px; border-radius: 18px; background: #f0e7d8; text-align: center; font-size: 14px; color: #4f553d; }
         `}</style>
       </main>
     );
@@ -270,18 +230,8 @@ export default function ManagerSubmissionsPage() {
           </p>
         </div>
         <style jsx>{`
-          .page {
-            min-height: 100vh;
-            background: #f5f3ef;
-          }
-          .page-inner {
-            width: 100%;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 16px 32px 40px;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
-              sans-serif;
-          }
+          .page { min-height: 100vh; background: #f5f3ef; }
+          .page-inner { width: 100%; max-width: 1200px; margin: 0 auto; padding: 16px 32px 40px; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
         `}</style>
       </main>
     );
@@ -289,25 +239,7 @@ export default function ManagerSubmissionsPage() {
 
   return (
     <main dir="rtl" className="page">
-      {/* Full-width nav, like main page */}
-      <nav className="top-nav">
-        <button className="brand-btn" type="button" onClick={goHome}>
-          Rosterly
-        </button>
-        <div className="nav-links">
-          <span className="nav-link">צוות</span>
-          <span className="nav-link">פורום</span>
-          <span className="nav-link">מדריכים</span>
-          <span className="nav-sep" />
-          <button
-            className="nav-login"
-            type="button"
-            onClick={handleLoginClick}
-          >
-            {email ? 'מחובר/ת' : 'להתחבר'}
-          </button>
-        </div>
-      </nav>
+      {/* NOTE: Header/nav comes from RosterlyShell via /manager/layout.tsx */}
 
       <div className="page-inner">
         <div className="content">
@@ -330,39 +262,28 @@ export default function ManagerSubmissionsPage() {
                 <span className="filter-label">סינון לפי תפקיד:</span>
                 <button
                   type="button"
-                  className={
-                    'filter-pill' +
-                    (filterRole === 'all' ? ' filter-pill--active' : '')
-                  }
+                  className={'filter-pill' + (filterRole === 'all' ? ' filter-pill--active' : '')}
                   onClick={() => setFilterRole('all')}
                 >
                   כולם
                 </button>
                 <button
                   type="button"
-                  className={
-                    'filter-pill' +
-                    (filterRole === 'staff' ? ' filter-pill--active' : '')
-                  }
+                  className={'filter-pill' + (filterRole === 'staff' ? ' filter-pill--active' : '')}
                   onClick={() => setFilterRole('staff')}
                 >
                   צוות
                 </button>
                 <button
                   type="button"
-                  className={
-                    'filter-pill' + (filterRole === 'op' ? ' filter-pill--active' : '')
-                  }
+                  className={'filter-pill' + (filterRole === 'op' ? ' filter-pill--active' : '')}
                   onClick={() => setFilterRole('op')}
                 >
                   OP
                 </button>
                 <button
                   type="button"
-                  className={
-                    'filter-pill' +
-                    (filterRole === 'manager' ? ' filter-pill--active' : '')
-                  }
+                  className={'filter-pill' + (filterRole === 'manager' ? ' filter-pill--active' : '')}
                   onClick={() => setFilterRole('manager')}
                 >
                   מנהלים
@@ -419,8 +340,7 @@ export default function ManagerSubmissionsPage() {
                             <div
                               key={chip.key}
                               className={
-                                'day-chip' +
-                                (chip.available ? ' day-chip--yes' : ' day-chip--no')
+                                'day-chip' + (chip.available ? ' day-chip--yes' : ' day-chip--no')
                               }
                             >
                               <span className="day-chip-label">{chip.label}</span>
@@ -430,18 +350,12 @@ export default function ManagerSubmissionsPage() {
                         </div>
                       </span>
                       <span className="col col-status">
-                        {isApproved && (
-                          <span className="status-pill status-pill--ok">תקין</span>
-                        )}
+                        {isApproved && <span className="status-pill status-pill--ok">תקין</span>}
                         {isRejected && (
-                          <span className="status-pill status-pill--bad">
-                            נדחה – ממתין להגשה מחדש
-                          </span>
+                          <span className="status-pill status-pill--bad">נדחה – ממתין להגשה מחדש</span>
                         )}
                         {isPending && (
-                          <span className="status-pill status-pill--pending">
-                            ממתין לסיווג
-                          </span>
+                          <span className="status-pill status-pill--pending">ממתין לסיווג</span>
                         )}
                       </span>
                       <span className="col col-actions">
@@ -475,11 +389,7 @@ export default function ManagerSubmissionsPage() {
                             החזרה למצב בדיקה
                           </button>
                         )}
-                        {isRejected && (
-                          <span className="action-note">
-                            ממתין להגשה חדשה מהעובד/ת
-                          </span>
-                        )}
+                        {isRejected && <span className="action-note">ממתין להגשה חדשה מהעובד/ת</span>}
                       </span>
                     </div>
                   );
@@ -493,364 +403,55 @@ export default function ManagerSubmissionsPage() {
       </div>
 
       <style jsx>{`
-        .page {
-          min-height: 100vh;
-          background: #f5f3ef;
-        }
-
-        .top-nav {
-          background-color: #f5f3ef;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 1rem 2rem;
-          font-size: 13px;
-          direction: ltr;
-        }
-
-        .brand-btn {
-          background: none;
-          border: none;
-          padding: 0;
-          margin: 0;
-          font-weight: 600;
-          color: #4f553d;
-          cursor: pointer;
-        }
-
-        .nav-links {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-
-        .nav-link {
-          color: #666;
-          font-size: 12px;
-        }
-
-        .nav-sep {
-          width: 1px;
-          height: 14px;
-          background: #e0ddd5;
-          margin: 0 4px;
-        }
-
-        .nav-login {
-          border: none;
-          outline: none;
-          padding: 4px 14px;
-          border-radius: 999px;
-          background: #4f553d;
-          color: #f5f3ef;
-          font-size: 12px;
-          cursor: pointer;
-        }
-
-        .page-inner {
-          width: 100%;
-          max-width: 1440px;
-          margin: 0 auto;
-          padding: 12px 32px 32px;
-          font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
-            sans-serif;
-          color: #333;
-        }
-
-        .content {
-          max-width: 900px;
-          margin: 40px auto 0;
-          text-align: center;
-        }
-
-        .hero {
-          margin-bottom: 24px;
-        }
-
-        .logo-card.small {
-          width: 80px;
-          height: 80px;
-          margin: 0 auto 16px;
-          border-radius: 24px;
-          background: #f0e7d8;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.03);
-        }
-
-        .logo-text {
-          font-size: 13px;
-          color: #4f553d;
-          font-weight: 500;
-        }
-
-        .hero-title {
-          font-size: 20px;
-          margin-bottom: 4px;
-          color: #3a3e2d;
-          font-weight: 600;
-        }
-
-        .hero-subtitle {
-          font-size: 13px;
-          color: #777;
-          margin: 0;
-        }
-
-        .card {
-          background: #efe6d8;
-          border-radius: 18px;
-          padding: 14px 18px;
-          text-align: right;
-          box-shadow: 0 14px 35px rgba(0, 0, 0, 0.03);
-        }
-
-        .card-toolbar {
-          margin-bottom: 12px;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 12px;
-        }
-
-        .toolbar-left,
-        .toolbar-right {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          flex-wrap: wrap;
-        }
-
-        .pill {
-          display: inline-flex;
-          align-items: center;
-          border-radius: 999px;
-          padding: 3px 10px;
-          font-size: 11px;
-          background: #e0d6c3;
-          color: #4f553d;
-        }
-
-        .pill.small {
-          font-size: 10px;
-          padding-inline: 8px;
-        }
-
-        .filter-role {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          font-size: 11px;
-          color: #6b6458;
-        }
-
-        .filter-label {
-          margin-left: 4px;
-        }
-
-        .filter-pill {
-          border-radius: 999px;
-          border: 1px solid #d3ccbf;
-          background: #f7f2e9;
-          padding: 3px 8px;
-          font-size: 11px;
-          color: #746b5e;
-          cursor: pointer;
-        }
-
-        .filter-pill--active {
-          background: #4f553d;
-          color: #f5f3ef;
-          border-color: #4f553d;
-        }
-
-        .print-button {
-          border-radius: 999px;
-          border: none;
-          background: #4f553d;
-          color: #f5f3ef;
-          padding: 6px 14px;
-          font-size: 12px;
-          cursor: pointer;
-        }
-
-        .card-table {
-          margin-top: 14px;
-        }
-
-        .table {
-          width: 100%;
-          font-size: 12px;
-        }
-
-        .table-head,
-        .table-row {
-          display: grid;
-          grid-template-columns: 1.6fr 1fr 2.4fr 1.2fr 1.6fr;
-          align-items: center;
-          gap: 8px;
-          padding: 6px 8px;
-        }
-
-        .table-head {
-          border-bottom: 1px solid #e0d5c3;
-          color: #6b6458;
-          font-weight: 500;
-        }
-
-        .table-row {
-          border-radius: 10px;
-          margin-top: 6px;
-          background: #f4eee2;
-          border: 1px solid #e3dacb;
-        }
-
-        .table-row--ok {
-          background: #f1f6ea;
-          border-color: #d3e2bf;
-        }
-
-        .table-row--pending {
-          background: #fdf3e3;
-          border-color: #f0e0c7;
-        }
-
-        .table-row--bad {
-          background: #fde9e9;
-          border-color: #f2c5c5;
-        }
-
-        .col-name {
-          font-weight: 500;
-          color: #3a3e2d;
-        }
-
-        .col-role {
-          color: #6b6458;
-        }
-
-        .day-chips {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 4px;
-          justify-content: flex-start;
-        }
-
-        .day-chip {
-          display: inline-flex;
-          align-items: center;
-          gap: 2px;
-          border-radius: 999px;
-          padding: 2px 6px;
-          font-size: 10px;
-          border: 1px solid #d3ccbf;
-          background: #f7f2e9;
-        }
-
-        .day-chip--yes {
-          background: #edf5e3;
-          border-color: #d0e2bc;
-        }
-
-        .day-chip--no {
-          background: #f7f2e9;
-          border-color: #ddd0bf;
-        }
-
-        .day-chip-label {
-          font-weight: 500;
-          color: #3a3e2d;
-        }
-
-        .day-chip-value {
-          color: #746b5e;
-        }
-
-        .status-pill {
-          border-radius: 999px;
-          padding: 2px 8px;
-          font-size: 11px;
-        }
-
-        .status-pill--ok {
-          background: #d8ead1;
-          color: #355a32;
-        }
-
-        .status-pill--pending {
-          background: #f7e2c1;
-          color: #7b5b29;
-        }
-
-        .status-pill--bad {
-          background: #f6c7c7;
-          color: #7a2020;
-        }
-
-        .action-button {
-          border-radius: 999px;
-          border: none;
-          padding: 3px 9px;
-          font-size: 11px;
-          cursor: pointer;
-          margin-left: 4px;
-        }
-
-        .action-button--ok {
-          background: #4f553d;
-          color: #f5f3ef;
-        }
-
-        .action-button--bad {
-          background: #b14444;
-          color: #fdf3f3;
-        }
-
-        .action-link {
-          border: none;
-          background: none;
-          color: #6b6458;
-          font-size: 11px;
-          text-decoration: underline;
-          cursor: pointer;
-        }
-
-        .action-note {
-          font-size: 11px;
-          color: #7a3a3a;
-        }
-
-        .empty-text {
-          font-size: 12px;
-          color: #6b6458;
-          margin: 6px 2px;
-        }
-
-        .status-msg {
-          margin-top: 10px;
-          font-size: 11px;
-          color: #4b4336;
-        }
-
+        .page { min-height: 100vh; background: #f5f3ef; }
+        .page-inner { width: 100%; max-width: 1440px; margin: 0 auto; padding: 12px 32px 32px; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #333; }
+        .content { max-width: 900px; margin: 40px auto 0; text-align: center; }
+        .hero { margin-bottom: 24px; }
+        .logo-card.small { width: 80px; height: 80px; margin: 0 auto 16px; border-radius: 24px; background: #f0e7d8; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(0,0,0,.03); }
+        .logo-text { font-size: 13px; color: #4f553d; font-weight: 500; }
+        .hero-title { font-size: 20px; margin-bottom: 4px; color: #3a3e2d; font-weight: 600; }
+        .hero-subtitle { font-size: 13px; color: #777; margin: 0; }
+        .card { background: #efe6d8; border-radius: 18px; padding: 14px 18px; text-align: right; box-shadow: 0 14px 35px rgba(0,0,0,0.03); }
+        .card-toolbar { margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+        .toolbar-left, .toolbar-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .pill { display: inline-flex; align-items: center; border-radius: 999px; padding: 3px 10px; font-size: 11px; background: #e0d6c3; color: #4f553d; }
+        .pill.small { font-size: 10px; padding-inline: 8px; }
+        .filter-role { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #6b6458; }
+        .filter-label { margin-left: 4px; }
+        .filter-pill { border-radius: 999px; border: 1px solid #d3ccbf; background: #f7f2e9; padding: 3px 8px; font-size: 11px; color: #746b5e; cursor: pointer; }
+        .filter-pill--active { background: #4f553d; color: #f5f3ef; border-color: #4f553d; }
+        .print-button { border-radius: 999px; border: none; background: #4f553d; color: #f5f3ef; padding: 6px 14px; font-size: 12px; cursor: pointer; }
+        .card-table { margin-top: 14px; }
+        .table { width: 100%; font-size: 12px; }
+        .table-head, .table-row { display: grid; grid-template-columns: 1.6fr 1fr 2.4fr 1.2fr 1.6fr; align-items: center; gap: 8px; padding: 6px 8px; }
+        .table-head { border-bottom: 1px solid #e0d5c3; color: #6b6458; font-weight: 500; }
+        .table-row { border-radius: 10px; margin-top: 6px; background: #f4eee2; border: 1px solid #e3dacb; }
+        .table-row--ok { background: #f1f6ea; border-color: #d3e2bf; }
+        .table-row--pending { background: #fdf3e3; border-color: #f0e0c7; }
+        .table-row--bad { background: #fde9e9; border-color: #f2c5c5; }
+        .col-name { font-weight: 500; color: #3a3e2d; }
+        .col-role { color: #6b6458; }
+        .day-chips { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-start; }
+        .day-chip { display: inline-flex; align-items: center; gap: 2px; border-radius: 999px; padding: 2px 6px; font-size: 10px; border: 1px solid #d3ccbf; background: #f7f2e9; }
+        .day-chip--yes { background: #edf5e3; border-color: #d0e2bc; }
+        .day-chip--no { background: #f7f2e9; border-color: #ddd0bf; }
+        .day-chip-label { font-weight: 500; color: #3a3e2d; }
+        .day-chip-value { color: #746b5e; }
+        .status-pill { border-radius: 999px; padding: 2px 8px; font-size: 11px; }
+        .status-pill--ok { background: #d8ead1; color: #355a32; }
+        .status-pill--pending { background: #f7e2c1; color: #7b5b29; }
+        .status-pill--bad { background: #f6c7c7; color: #7a2020; }
+        .action-button { border-radius: 999px; border: none; padding: 3px 9px; font-size: 11px; cursor: pointer; margin-left: 4px; }
+        .action-button--ok { background: #4f553d; color: #f5f3ef; }
+        .action-button--bad { background: #b14444; color: #fdf3f3; }
+        .action-link { border: none; background: none; color: #6b6458; font-size: 11px; text-decoration: underline; cursor: pointer; }
+        .action-note { font-size: 11px; color: #7a3a3a; }
+        .empty-text { font-size: 12px; color: #6b6458; margin: 6px 2px; }
+        .status-msg { margin-top: 10px; font-size: 11px; color: #4b4336; }
         @media (max-width: 900px) {
-          .table-head,
-          .table-row {
-            grid-template-columns: 1.6fr 1fr;
-            grid-template-rows: auto auto auto;
-          }
-
-          .col-days,
-          .col-status,
-          .col-actions {
-            margin-top: 4px;
-          }
-
-          .table-head .col-days,
-          .table-head .col-status,
-          .table-head .col-actions {
-            display: none;
-          }
+          .table-head, .table-row { grid-template-columns: 1.6fr 1fr; grid-template-rows: auto auto auto; }
+          .col-days, .col-status, .col-actions { margin-top: 4px; }
+          .table-head .col-days, .table-head .col-status, .table-head .col-actions { display: none; }
         }
       `}</style>
     </main>

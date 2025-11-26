@@ -1,0 +1,79 @@
+// app/manager/ManagerGate.tsx
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
+
+type Props = {
+  children: React.ReactNode;
+  redirectOnFail?: string; // default '/auth'
+};
+
+export default function ManagerGate({ children, redirectOnFail = '/auth' }: Props) {
+  const router = useRouter();
+  const [state, setState] = useState<'loading' | 'ok' | 'unauth' | 'error'>('loading');
+  const [msg, setMsg] = useState<string>('');
+
+  useEffect(() => {
+    let off = false;
+    (async () => {
+      try {
+        const { data: u, error: uErr } = await supabase.auth.getUser();
+        if (uErr || !u.user) {
+          if (!off) setState('unauth');
+          return;
+        }
+
+        const { data: roles, error } = await supabase
+          .from('user_roles')
+          .select('role_code')        // ✅ correct column
+          .eq('user_uid', u.user.id); // ✅ correct column
+
+        if (error) throw error;
+
+        const isManager = (roles ?? []).some(
+          (r: any) => r.role_code === 'manager' || r.role_code === 'admin'
+        );
+
+        if (!off) setState(isManager ? 'ok' : 'unauth');
+      } catch (e: any) {
+        if (!off) {
+          setMsg(e?.message ?? 'authorization error');
+          setState('error');
+        }
+      }
+    })();
+    return () => { off = true; };
+  }, []);
+
+  if (state === 'loading') {
+    return (
+      <main style={{minHeight:'50vh',display:'grid',placeItems:'center'}}>
+        <div style={{fontSize:12,opacity:.7}}>בודק הרשאות…</div>
+      </main>
+    );
+  }
+
+  if (state === 'unauth') {
+    // why: show a friendly message briefly, then redirect so page never stays blank
+    if (typeof window !== 'undefined') {
+      setTimeout(() => { router.replace(redirectOnFail); }, 600);
+    }
+    return (
+      <main style={{minHeight:'50vh',display:'grid',placeItems:'center'}}>
+        <div style={{fontSize:13,color:'#7a6f5d'}}>אין הרשאת מנהל. מעביר/ה לעמוד ההתחברות…</div>
+      </main>
+    );
+  }
+
+  if (state === 'error') {
+    return (
+      <main style={{minHeight:'50vh',display:'grid',placeItems:'center'}}>
+        <div style={{fontSize:12,color:'#b33'}}>שגיאה בבדיקת הרשאה: {msg}</div>
+      </main>
+    );
+  }
+
+  return <>{children}</>;
+}
