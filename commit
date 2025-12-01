@@ -1,0 +1,8 @@
+[33mcommit 2bc83128c9851a9be3c934a3ea85b8969b20ddd1[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m
+Author: Brian B <baudouin.brian.bb@gmail.com>
+Date:   Wed Nov 26 22:04:15 2025 +0200
+
+    chore: release 0.1.1
+
+M	package-lock.json
+M	package.json

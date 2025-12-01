@@ -1,19 +1,9 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+# app/globals.css
+-@tailwind base;
+-@tailwind components;
+-@tailwind utilities;
++@import "tailwindcss";
 
-/* brand tokens */
-:root{
-  --olive:#348B79;
-  --ink:#0E1615;
-  --beige:#F8F6F2;
-}
-html[dir='rtl'] body{direction:rtl}
-
-/* nicer container */
-.container {
-  @apply mx-auto max-w-7xl px-6;
-}
-.card {
-  @apply rounded-2xl bg-white shadow-xl ring-1 ring-black/5;
-}
+ /* brand tokens & rtl */
+ :root{ --olive:#348B79; --ink:#0E1615; --beige:#F8F6F2; }
+ html[dir='rtl'] body{ direction: rtl; }

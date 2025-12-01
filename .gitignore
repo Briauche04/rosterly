@@ -1,3 +1,10 @@
 # environment files
 .env*
 node_modules/
+.next/
+.vercel/
+*.bak
+*.zip
+.DS_Store
+.next/
+.vercel/
