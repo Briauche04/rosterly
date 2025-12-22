@@ -9,3 +9,6 @@ export default function Page({
   const lang = typeof searchParams.lang === 'string' ? searchParams.lang : 'he';
   return <RosterlyHomeClient lang={lang} />;
 }
+export const dynamic = 'force-dynamic';
+export const revalidate = 0; // avoid serving a prerendered (empty) shell
+
