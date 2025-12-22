@@ -1,15 +1,14 @@
 // app/rosterly/page.tsx
-export const dynamic = 'force-dynamic';
-export const revalidate = 0; // avoid serving a prerendered (empty) shell
-import RosterlyHomeClient from './RosterlyHomeClient';
+import dynamic from "next/dynamic";
 
-export default function Page({
-  searchParams,
-}: {
-  searchParams: { [k: string]: string | string[] | undefined };
-}) {
-  const lang = typeof searchParams.lang === 'string' ? searchParams.lang : 'he';
-  return <RosterlyHomeClient lang={lang} />;
+export const dynamic = "force-dynamic";
+export const revalidate = 0; // prevent stale prerendered HTML
+
+const RosterlyHomeClient = dynamic(
+  () => import("./RosterlyHomeClient"),
+  { ssr: false } // WHY: ensure client hydration runs in the browser
+);
+
+export default function Page() {
+  return <RosterlyHomeClient />;
 }
-
-
