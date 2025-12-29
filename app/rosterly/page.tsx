@@ -1,5 +1,8 @@
 import RosterlyHomeClient from './RosterlyHomeClient';
 
-export default function RosterlyPage() {
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+export default function Page() {
   return <RosterlyHomeClient />;
 }
