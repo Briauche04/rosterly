@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { STR } from '../i18n';
-import type { Lang } from '../i18n';
+import { STR } from './i18n';
+import type { Lang } from './i18n';
 
 interface Props {
   lang?: Lang;
