@@ -20,7 +20,7 @@ export default function AuthPage() {
     })();
   }, [router]);
 
-  // === Send verification code ===
+  // Send verification code
   async function sendCode(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
@@ -39,12 +39,11 @@ export default function AuthPage() {
       setMsg('❌ שגיאה: ' + error.message);
       return;
     }
-
     setMsg('✅ קוד נשלח למייל. הזן אותו כאן למטה.');
     setPhase('verify');
   }
 
-  // === Verify 6-digit code ===
+  // Verify 6-digit code
   async function verifyCode(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
@@ -64,7 +63,6 @@ export default function AuthPage() {
 
     if (data?.session) {
       setMsg('✅ התחברת בהצלחה. מעביר ללוח הבקרה…');
-      // Delay to allow session cookie to persist before redirect
       setTimeout(() => router.push('/dashboard'), 1500);
     } else {
       setMsg('❗ קרתה בעיה בשמירת ההתחברות. נסה שוב.');
@@ -101,33 +99,43 @@ export default function AuthPage() {
 
         {/* === Step 2: Verify Code === */}
         {phase === 'verify' && (
-  <form onSubmit={verifyCode} className="flex flex-col gap-3">
-    <input
-      type="text"
-      inputMode="numeric"
-      pattern="[0-9]*"
-      maxLength={6}
-      placeholder={`הקלד קוד בן 6 ספרות`}
-      value={code}
-      onChange={(e) => setCode(e.target.value)}
-      required
-      className="rounded border border-gray-300 px-3 py-2 text-center tracking-widest text-lg text-gray-800 focus:border-blue-500 focus:outline-none"
-    />
+          <form onSubmit={verifyCode} className="flex flex-col gap-3">
+            <input
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={6}
+              placeholder={`הקלד קוד בן 6 ספרות`}
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              required
+              className="rounded border border-gray-300 px-3 py-2 text-center tracking-widest text-lg text-gray-800 focus:border-blue-500 focus:outline-none"
+            />
 
-    <button
-      type="submit"
-      disabled={loading}
-      className="rounded bg-green-600 py-2 font-semibold text-white hover:bg-green-700 disabled:opacity-60"
-    >
-      {loading ? 'מאמת…' : 'אשר קוד והתחבר'}
-    </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="rounded bg-green-600 py-2 font-semibold text-white hover:bg-green-700 disabled:opacity-60"
+            >
+              {loading ? 'מאמת…' : 'אשר קוד והתחבר'}
+            </button>
 
-    <button
-      type="button"
-      onClick={() => { setPhase('request'); setMsg(''); setCode(''); }}
-      className="rounded bg-gray-200 py-2 font-semibold text-gray-800 hover:bg-gray-300"
-    >
-      חזרה לשליחת קוד
-    </button>
-  </form>
-)}
+            <button
+              type="button"
+              onClick={() => {
+                setPhase('request');
+                setMsg('');
+                setCode('');
+              }}
+              className="rounded bg-gray-200 py-2 font-semibold text-gray-800 hover:bg-gray-300"
+            >
+              חזרה לשליחת קוד
+            </button>
+          </form>
+        )}
+
+        {msg && <p className="mt-4 text-center text-sm text-gray-700">{msg}</p>}
+      </div>
+    </div>
+  );
+}

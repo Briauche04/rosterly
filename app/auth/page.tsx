@@ -1,141 +1,59 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
 
 export default function AuthPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [code, setCode] = useState('');
-  const [phase, setPhase] = useState<'request' | 'verify'>('request');
-  const [msg, setMsg] = useState('');
-  const [loading, setLoading] = useState(false);
+  const supabase = createClient();
 
-  // If already logged in, go to dashboard
+  const [msg, setMsg] = useState('');
+
+  // Redirect if already logged in
   useEffect(() => {
     (async () => {
       const { data } = await supabase.auth.getUser();
-      if (data.user) router.replace('/dashboard');
+      if (data.user) router.replace('/?lang=he'); // ✅ Redirect to correct homepage
     })();
   }, [router]);
 
-  // Send verification code
-  async function sendCode(e: React.FormEvent) {
+  // Handle login form
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
-    setMsg('שולח קוד אימות למייל…');
+    const formData = new FormData(e.target as HTMLFormElement);
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
 
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: 'http://localhost:3000',
-        shouldCreateUser: true,
-      },
-    });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
-    setLoading(false);
     if (error) {
-      setMsg('❌ שגיאה: ' + error.message);
-      return;
-    }
-    setMsg('✅ קוד נשלח למייל. הזן אותו כאן למטה.');
-    setPhase('verify');
-  }
-
-  // Verify 6-digit code
-  async function verifyCode(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    setMsg('מאמת קוד…');
-
-    const { data, error } = await supabase.auth.verifyOtp({
-      email,
-      token: code.trim(),
-      type: 'email',
-    });
-
-    setLoading(false);
-    if (error) {
-      setMsg('❌ קוד לא תקין או שפג תוקפו. נסה שוב.');
-      return;
-    }
-
-    if (data?.session) {
-      setMsg('✅ התחברת בהצלחה. מעביר ללוח הבקרה…');
-      setTimeout(() => router.push('/dashboard'), 1500);
-    } else {
-      setMsg('❗ קרתה בעיה בשמירת ההתחברות. נסה שוב.');
+      setMsg(`⚠️ שגיאה: ${error.message}`);
+    } else if (data?.session) {
+      setMsg('✅ התחברת בהצלחה. מעביר למסך הראשי…');
+      setTimeout(() => router.push('/?lang=he'), 1500); // ✅ Redirect to main page
     }
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow">
-        <h1 className="mb-4 text-center text-2xl font-bold text-gray-800">
-          התחברות למערכת המשמרות
-        </h1>
-
-        {/* === Step 1: Request Code === */}
-        {phase === 'request' && (
-          <form onSubmit={sendCode} className="flex flex-col gap-3">
-            <input
-              type="email"
-              placeholder="האימייל שלך"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="rounded border border-gray-300 px-3 py-2 text-gray-800 focus:border-blue-500 focus:outline-none"
-            />
-            <button
-              type="submit"
-              disabled={loading}
-              className="rounded bg-blue-600 py-2 font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
-            >
-              {loading ? 'שולח…' : 'שלח קוד התחברות'}
-            </button>
-          </form>
-        )}
-
-        {/* === Step 2: Verify Code === */}
-        {phase === 'verify' && (
-          <form onSubmit={verifyCode} className="flex flex-col gap-3">
-            <input
-              type="text"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              maxLength={6}
-              placeholder={`הקלד קוד בן 6 ספרות`}
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              required
-              className="rounded border border-gray-300 px-3 py-2 text-center tracking-widest text-lg text-gray-800 focus:border-blue-500 focus:outline-none"
-            />
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="rounded bg-green-600 py-2 font-semibold text-white hover:bg-green-700 disabled:opacity-60"
-            >
-              {loading ? 'מאמת…' : 'אשר קוד והתחבר'}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setPhase('request');
-                setMsg('');
-                setCode('');
-              }}
-              className="rounded bg-gray-200 py-2 font-semibold text-gray-800 hover:bg-gray-300"
-            >
-              חזרה לשליחת קוד
-            </button>
-          </form>
-        )}
-
-        {msg && <p className="mt-4 text-center text-sm text-gray-700">{msg}</p>}
+    <section className="page">
+      <div className="page-inner center-card">
+        <h2 style={{ marginTop: 0 }}>כניסה</h2>
+        <form onSubmit={handleSubmit}>
+          <div className="form-row">
+            <label htmlFor="email">אימייל</label>
+            <input type="email" id="email" name="email" required />
+          </div>
+          <div className="form-row">
+            <label htmlFor="password">סיסמה</label>
+            <input type="password" id="password" name="password" required />
+          </div>
+          <button type="submit" className="login-btn">
+            התחבר
+          </button>
+        </form>
+        {msg && <p style={{ marginTop: '1rem' }}>{msg}</p>}
       </div>
-    </div>
+    </section>
   );
 }
