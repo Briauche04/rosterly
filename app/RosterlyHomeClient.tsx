@@ -1,43 +1,67 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
+import { STR } from '../i18n';
+import type { Lang } from '../i18n';
 
-export default function RosterlyHomeClient() {
+interface Props {
+  lang?: Lang;
+}
+
+export default function RosterlyHomeClient({ lang = 'he' }: Props) {
+  const t = STR[lang];
+
   return (
     <main className="landing-main" dir="rtl">
-      <img src="/logo.png" alt="Rosterly" className="logo" />
-      <h2>Rosterly – הגשת משמרות</h2>
-      <h3>הגשה, אישורים וסידור שבועי מסודר במקום אחד.</h3>
+      {/* Logo */}
+      <Image src="/logo.png" alt="Rosterly" className="logo" width={160} height={160} />
 
-      <section className="landing-cards" style={{ maxWidth: '640px', margin: '0 auto' }}>
+      {/* Headings */}
+      <h2>{t.home_title}</h2>
+      <h3>{t.home_subtitle}</h3>
+
+      {/* Cards Section */}
+      <section className="landing-cards">
+        {/* Submit Card */}
         <Link href="/submit" className="action-card">
-          <div>
-            <header>הגשת משמרת</header>
-            <p>סימון זמינות לשבוע הקרוב בצורה ברורה ומדויקת.</p>
-          </div>
+          <header>{t.submit_card_title}</header>
+          <p>{t.submit_card_description}</p>
         </Link>
 
-        <Link href="/tutorials" className="action-card">
-          <div>
-            <header>מדריכים</header>
-            <p>מקום לשאלות ועזרי לימוד לצוות החנות.</p>
-          </div>
+        {/* Reminders */}
+        <Link href="/reminders" className="action-card">
+          <header>{t.reminders_card_title}</header>
+          <p>{t.reminders_card_description}</p>
         </Link>
 
-        <Link href="/forum" className="action-card">
-          <div>
-            <header>פורום</header>
-            <p>מקום לשאלות ועדכונים לצוות החנות.</p>
-          </div>
+        {/* Team Page */}
+        <Link href="/team" className="action-card">
+          <header>{t.team_card_title}</header>
+          <p>{t.team_card_description}</p>
         </Link>
 
+        {/* Manager Area */}
         <Link href="/manager" className="action-card manager-card">
-          <div>
-            <header>כלי מנהלים</header>
-            <p>אישורי משמרות, סידור קבוע, כתיבה והפקת סדר שבועי.</p>
-          </div>
+          <header>{t.manager_card_title}</header>
+          <p>{t.manager_card_description}</p>
+        </Link>
+
+        {/* Forum */}
+        <Link href="/forum" className="action-card">
+          <header>{t.forum_card_title}</header>
+          <p>{t.forum_card_description}</p>
+        </Link>
+
+        {/* Tutorials */}
+        <Link href="/tutorials" className="action-card">
+          <header>{t.tutorials_card_title}</header>
+          <p>{t.tutorials_card_description}</p>
         </Link>
       </section>
+
+      {/* Footer */}
+      <footer className="landing-footer">Rosterly &copy; 2026</footer>
     </main>
   );
 }
