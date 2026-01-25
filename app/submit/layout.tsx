@@ -1,10 +1,12 @@
-// app/submit/layout.tsx  (SERVER — provides Suspense boundary for CSR bailout)
-import { Suspense } from 'react';
+// app/submit/layout.tsx
+import '../rosterly.css'; // ✅ FIXED path
+import RosterlyShell from '../RosterlyShell'; // ✅ use shell to apply nav and layout
+
+export const metadata = {
+  title: 'Rosterly',
+  description: 'Submit shifts and view schedules',
+};
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  return (
-    <Suspense fallback={<main className="landing-main" dir="rtl"><p>טוען…</p></main>}>
-      {children}
-    </Suspense>
-  );
+  return <RosterlyShell>{children}</RosterlyShell>;
 }

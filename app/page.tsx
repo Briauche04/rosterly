@@ -1,17 +1,12 @@
 'use client';
 
-import SiteHeader from "./components/SiteHeader";
-import HeroShowcase from "./components/HeroShowcase";
-import FeaturesSection from "./components/FeaturesSection";
-import SiteFooter from "./components/SiteFooter";
+import RosterlyShell from './RosterlyShell';
+import RosterlyHomeClient from './RosterlyHomeClient';
 
-export default function Home() {
+export default function Page() {
   return (
-    <main>
-      <SiteHeader />
-      <HeroShowcase />
-      <FeaturesSection />
-      <SiteFooter />
-    </main>
+    <RosterlyShell>
+      <RosterlyHomeClient />
+    </RosterlyShell>
   );
 }

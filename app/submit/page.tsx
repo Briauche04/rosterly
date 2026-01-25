@@ -1,5 +1,5 @@
-// app/submit/page.tsx  (SERVER — no client hooks here)
-import SubmitClient from './SubmitClient';
+// app/submit/page.tsx (Server Component)
+import SubmitWrapper from './SubmitWrapper';
 
 export default function Page({
   searchParams,
@@ -7,5 +7,6 @@ export default function Page({
   searchParams: { [k: string]: string | string[] | undefined };
 }) {
   const lang = typeof searchParams.lang === 'string' ? searchParams.lang : 'he';
-  return <SubmitClient lang={lang} />;
+
+  return <SubmitWrapper lang={lang} />;
 }

@@ -1,0 +1,12 @@
+// app/submit/layout.tsx
+import '../../rosterly.css'; // Use the correct relative path to the CSS
+import RosterlyShell from '../RosterlyShell'; // Assuming RosterlyShell is in /app
+
+export const metadata = {
+  title: 'Rosterly',
+  description: 'Submit shifts and view schedules',
+};
+
+export default function Layout({ children }: { children: React.ReactNode }) {
+  return <RosterlyShell>{children}</RosterlyShell>;
+}
